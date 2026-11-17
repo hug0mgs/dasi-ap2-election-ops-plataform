@@ -1,0 +1,52 @@
+{
+  "initial": {
+    "date": "2026-11-17",
+    "commit": "5aa147c297a0e68a8201b6fe2408175b2c78aa3c",
+    "clocVersion": "2.12",
+    "code": 83517,
+    "files": 751,
+    "note": "Checkpoint do repositório antes da contagem contínua. O total acompanha o código atual; o checkpoint serve de referência histórica.",
+    "officialCommand": "cloc . --vcs=git --exclude-dir=node_modules,vendor,dist,build,prompts --exclude-lang=Markdown,JSON,YAML,CSV,Text,SVG --not-match-f='(lock|\\.min\\.)'",
+    "languages": {
+      "TypeScript": {
+        "nFiles": 685,
+        "code": 73574
+      },
+      "CSS": {
+        "nFiles": 28,
+        "code": 3680
+      },
+      "Prisma Schema": {
+        "nFiles": 1,
+        "code": 3054
+      },
+      "SQL": {
+        "nFiles": 25,
+        "code": 2218
+      },
+      "JavaScript": {
+        "nFiles": 8,
+        "code": 926
+      },
+      "PowerShell": {
+        "nFiles": 3,
+        "code": 53
+      },
+      "HTML": {
+        "nFiles": 1,
+        "code": 12
+      }
+    }
+  },
+  "checkpoints": [
+    {
+      "date": "2026-11-17T06:08:44.473Z",
+      "commit": "8094cab67e56c1600642fb54f21e1cd223603705",
+      "workingTreeDirty": true,
+      "clocVersion": "2.12",
+      "code": 83692,
+      "files": 752,
+      "deltaSincePrevious": 175
+    }
+  ]
+}

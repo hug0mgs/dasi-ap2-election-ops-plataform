@@ -32,7 +32,7 @@
     "db:seed": "npm run build:security && tsx packages/database/prisma/seed.ts",
     "db:validate": "prisma validate --schema packages/database/prisma/schema.prisma",
     "count:loc": "node scripts/count-loc.mjs",
-  "loc:new": "node scripts/count-new-loc.mjs",
+  "loc:total": "node scripts/count-loc-total.mjs",
     "build:security": "npm run build -w @eops/security",
     "build:event-bus": "npm run build -w @eops/event-bus",
     "pretest": "npm run build:security && npm run build:event-bus"
