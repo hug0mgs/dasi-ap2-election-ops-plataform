@@ -2,7 +2,9 @@
 
 ## Status
 
-`approved`
+`superseded`
+
+> Substituída em 2026-11-17 por decisão do usuário: a contagem passou a acompanhar o **total** de linhas de código, mantendo o checkpoint histórico de 83.517 linhas (commit `5aa147c`). A norma vigente está em `AGENTS.md` §Contagem de linhas de código. Não existe SPEC sucessora registrada, conforme pedido explícito do usuário.
 
 ## Contexto
 

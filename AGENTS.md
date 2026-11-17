@@ -125,17 +125,16 @@ Não crie árvores duplicadas de teste para o mesmo módulo. Se um domínio novo
 - `README.md` contém a saída real do comando oficial de `cloc` documentado nele.
 - A meta de rubrica de pelo menos 100.000 linhas contabilizadas só pode ser declarada após medição real. É proibido inflar a contagem com código artificial, arquivos duplicados ou exclusões seletivas; se a medição ficar abaixo da meta, registre a pendência.
 
-## Contagem de linhas novas (cloc)
+## Contagem de linhas de código (cloc)
 
-A contagem de código novo usa o comando oficial de `cloc` do `README.md`, com baseline fixa.
+O projeto acompanha o **total** de linhas de código com o comando oficial de `cloc` do `README.md`. Existe um checkpoint histórico do repositório antes da contagem contínua.
 
-- **Baseline imutável:** `docs/metrics/loc-baseline.json`, commit `5aa147c` (2026-11-17): **83.517 linhas de código em 751 arquivos**. Nada escrito antes disso entra na contagem.
-- **Obrigação ao fim de cada tarefa:** o papel Especificador/commitador (`opencode/deepseek-v4.1-flash-free`) executa `npm run loc:new` e garante que `docs/metrics/NEW-LOC.md` reflita a última medição antes do handoff.
-- `LOC_NEW_DRY=1 npm run loc:new` (PowerShell: `$env:LOC_NEW_DRY=1; npm run loc:new`) mede sem gravar; use apenas em inspeção. `--no-record` só funciona chamando `node scripts/count-new-loc.mjs --no-record` direto, porque o npm intercepta flags `--no-*`.
-- Nunca editar `loc-baseline.json` nem `loc-history.json` à mão, e nunca inflar a contagem com código artificial, duplicado ou copiado.
+- **Checkpoint inicial:** `docs/metrics/loc-checkpoints.json`, commit `5aa147c` (2026-11-17): **83.517 linhas de código em 751 arquivos**. Ele é referência histórica e não é reescrito.
+- **Métrica principal:** total atual de linhas de código. A variação desde o checkpoint é informativa, não é a métrica.
+- **Obrigação ao fim de cada tarefa:** o papel Especificador/commitador (`opencode/deepseek-v4.1-flash-free`) executa `npm run loc:total` e garante que `docs/metrics/LOC.md` reflita o último total antes do handoff.
+- `LOC_NO_RECORD=1 npm run loc:total` (PowerShell: `$env:LOC_NO_RECORD=1; npm run loc:total`) mede sem gravar; use apenas em inspeção. `--no-record` só funciona chamando `node scripts/count-loc-total.mjs --no-record` direto, porque o npm intercepta flags `--no-*`.
+- Nunca editar `loc-checkpoints.json` à mão, e nunca inflar a contagem com código artificial, duplicado ou copiado.
 - Se `cloc` não estiver disponível (ou `CLOC_BIN` não apontar para ele), registre a pendência no handoff sem estimar números.
-
-A SPEC aplicável é [`SPEC/2026-11-17-loc-baseline-and-new-line-tracking.md`](SPEC/2026-11-17-loc-baseline-and-new-line-tracking.md).
 
 ## Validação
 
