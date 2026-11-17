@@ -120,6 +120,24 @@ Spec: SPEC/2026-10-01-shifts.md
 
 Quando mais de uma SPEC for realmente necessária, podem existir múltiplas linhas `Spec:`, mas prefira dividir a mudança em commits menores sempre que os domínios forem independentes.
 
+### Participação de agentes (tarefas multiagente)
+
+Quando a tarefa envolver mais de um agente, registre no **corpo** da mensagem quem atuou e em qual papel. A lista é corpo, não trailer: `npm run spec:check` (V1) exige exatamente um `Agent:` e aceita apenas o formato `provedor/modelo`.
+
+```text
+feat(tooling): mede linhas novas com cloc desde a baseline
+
+Participação de agentes:
+- opencode/glm-5.3-flash-free — orquestração, plano e go/no-go
+- opencode/deepseek-v4.1-flash-free — SPEC, mensagem de commit e validação
+- openai/gpt-6-astra — implementação de código
+
+Agent: opencode/deepseek-v4.1-flash-free
+Spec: SPEC/2026-11-17-loc-baseline-and-new-line-tracking.md
+```
+
+Regras: registrar apenas agentes que realmente atuaram; o trailer `Agent:` nomeia quem executou o commit; a autoria (`author`/`committer`) continua humana e sem coautoria de modelo.
+
 ## 6. Atomicidade e isolamento
 
 Um commit deve representar **uma unidade lógica revisável**.
