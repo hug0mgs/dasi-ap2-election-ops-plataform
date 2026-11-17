@@ -540,6 +540,19 @@ GET /reports/export.pdf    (existente, mantido)
 GET /reports/export.json   novo — JSON estruturado
 ```
 
+CSV e PDF aceitam `viewId` opcional para exportar uma `ReportSavedView` persistida:
+
+```text
+GET /reports/export.csv?viewId=<id>
+GET /reports/export.pdf?viewId=<id>
+```
+
+Quando `viewId` é informado, o backend resolve a visão antes de gerar o arquivo. A visão precisa existir e estar visível ao ator: visão privada somente para o owner; visão compartilhada para qualquer ator com `reports.read`. `reports.manage` não concede exportação por si só. Em todos os casos, o endpoint continua exigindo `reports.export`.
+
+Os filtros persistidos na visão são a fonte canônica da exportação. Parâmetros ad hoc de filtro recebidos junto com `viewId` não sobrescrevem `filters`, `metricsJson` nem `granularity`; essa regra impede que uma exportação identificada como pertencente a uma visão represente outro escopo. Sem `viewId`, o comportamento ad hoc existente permanece compatível.
+
+O CSV e o PDF identificam a visão exportada com nome, owner e data de geração. O nome de download usa um slug seguro e limitado derivado do nome da visão, com fallback `relatorio-election-ops`. A implementação reutiliza os geradores e agregações existentes; não cria cópia de dados, migration, nova permissão ou evento de leitura.
+
 `export.json` devolve:
 
 ```text
@@ -548,7 +561,7 @@ GET /reports/export.json   novo — JSON estruturado
   timeseries: { <métrica>: buckets } quando solicitado via ?metrics= }
 ```
 
-Todos os exports exigem `reports.export` e respeitam o escopo. Nenhum export inclui artefato simulado por default.
+Todos os exports exigem `reports.export` e respeitam o escopo. Nenhum export inclui artefato simulado por default. Nesta fase, a exportação por `viewId` é obrigatória para CSV e PDF; o contrato de `export.json` permanece ad hoc e inalterado.
 
 ## 2.9 Frontend
 
@@ -563,12 +576,14 @@ Todos os exports exigem `reports.export` e respeitam o escopo. Nenhum export inc
 
 As páginas por domínio existentes (`ReportsIncidentsPage`, `ReportsTransmissionPage`, `ReportsWorkforcePage`, `ReportsLogisticsPage`, `ReportsAssetsPage`, `ReportsOperationsPage`) são mantidas e passam a oferecer deep link para drill-down. `BarChart` existente é reaproveitado; nenhuma biblioteca de gráficos nova é adicionada.
 
+`/reports/views` oferece ações “Exportar CSV” e “Exportar PDF” em cada visão visível quando o ator possui `reports.export`. `/reports/export` permite selecionar uma visão salva ou manter a exportação ad hoc atual. Ao selecionar uma visão, a interface exibe de forma somente-leitura o nome, owner, compartilhamento, filtros, métricas e granularidade que serão aplicados; estados de carregamento, erro e lista vazia são explícitos.
+
 ## 2.10 Permissões
 
 ```text
 reports.read     dashboards, séries, SLA, zonas, drill-down, views read, export.json
 reports.manage   criar/editar/remover views, compartilhar views
-reports.export   CSV, PDF, JSON
+reports.export   CSV, PDF, JSON; exportar view não dispensa a visibilidade da view
 ```
 
 ## 2.11 Eventos
@@ -1180,6 +1195,10 @@ REP-08  drill-down devolve as entidades do bucket com deep link real e total nã
 REP-09  visões salvas têm ownership, compartilhamento por permissão e default transacional
 REP-10  export JSON estruturado existe e respeita escopo
 REP-11  artefatos simulados ficam fora das séries por default
+REP-12  CSV e PDF aceitam viewId e usam os filtros persistidos sem override ad hoc
+REP-13  view privada só é exportada pelo owner; view compartilhada respeita reports.read
+REP-14  toda exportação de view exige reports.export e identifica a visão no arquivo
+REP-15  exportação ad hoc sem viewId permanece compatível
 ```
 
 ## Transmission / NOC 2.0
@@ -1262,7 +1281,9 @@ Cobertura mínima exigida:
 Simulator     determinismo, lifecycle, validação de cenário, score e pesos, snapshots,
               replay por offset, comparação, limites de escrita cross-domain
 Reports       buckets e granularidade, fórmulas de SLA com denominador zero,
-              normalização por zona, drill-down e total não truncado, validação de métrica
+              normalização por zona, drill-down e total não truncado, validação de métrica,
+              exportação CSV/PDF por viewId, ownership/compartilhamento, precedência dos
+              filtros persistidos e compatibilidade da exportação ad hoc
 Transmission  transições e duração, primário único, failover, fórmulas de uptime,
               UNKNOWN fora do uptime, correlação gateada por permissão
 Audit         derivação de categoria/severidade, sanitização, truncamento de payload,
