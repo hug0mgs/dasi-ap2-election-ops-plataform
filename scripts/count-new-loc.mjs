@@ -34,7 +34,9 @@ const EXCLUDES = [
 ];
 
 const args = process.argv.slice(2);
-const record = !args.includes('--no-record');
+// `npm run ... -- --no-record` nao funciona: o npm trata `--no-*` como configuracao
+// propria e nao repassa a flag. Por isso a medicao seca tambem aceita LOC_NEW_DRY=1.
+const record = !(args.includes('--no-record') || args.includes('--dry-run') || process.env.LOC_NEW_DRY === '1');
 
 function fail(message) {
   console.error(`erro: ${message}`);
@@ -242,8 +244,8 @@ function renderReport(base, latest, history) {
   lines.push('## Como medir');
   lines.push('');
   lines.push('```bash');
-  lines.push('npm run loc:new                 # mede e registra');
-  lines.push('npm run loc:new -- --no-record  # apenas mede');
+  lines.push('npm run loc:new                    # mede e registra');
+  lines.push('LOC_NEW_DRY=1 npm run loc:new      # apenas mede');
   lines.push('```');
   lines.push('');
   return lines.join('\n');
