@@ -1,0 +1,26 @@
+{
+  "baseline": {
+    "date": "2026-11-17",
+    "commit": "5aa147c297a0e68a8201b6fe2408175b2c78aa3c",
+    "commitDate": "2026-10-20",
+    "clocVersion": "2.12",
+    "command": "cloc <dir> --exclude-dir=node_modules,vendor,dist,build,prompts,graphify-out,.git --exclude-lang=Markdown,JSON,YAML,CSV,Text,SVG --not-match-f='(lock|\\.min\\.)'",
+    "officialCommand": "cloc . --vcs=git --exclude-dir=node_modules,vendor,dist,build,prompts --exclude-lang=Markdown,JSON,YAML,CSV,Text,SVG --not-match-f='(lock|\\.min\\.)'",
+    "scope": "Todo o código versionado até 2026-11-17. Nada escrito depois desta data entra na baseline.",
+    "totals": {
+      "code": 83517,
+      "comment": 2544,
+      "blank": 6821,
+      "files": 751
+    },
+    "languages": {
+      "TypeScript": { "nFiles": 685, "code": 73574, "comment": 2030, "blank": 5376 },
+      "CSS": { "nFiles": 28, "code": 3680, "comment": 48, "blank": 366 },
+      "Prisma Schema": { "nFiles": 1, "code": 3054, "comment": 10, "blank": 336 },
+      "SQL": { "nFiles": 25, "code": 2218, "comment": 446, "blank": 568 },
+      "JavaScript": { "nFiles": 8, "code": 926, "comment": 10, "blank": 172 },
+      "PowerShell": { "nFiles": 3, "code": 53, "comment": 0, "blank": 3 },
+      "HTML": { "nFiles": 1, "code": 12, "comment": 0, "blank": 0 }
+    }
+  }
+}
