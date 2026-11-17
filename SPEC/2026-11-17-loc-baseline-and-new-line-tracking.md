@@ -60,7 +60,7 @@ Sem baseline versionada e sem comando reproduzível:
 4. reportar linhas **adicionadas**, **modificadas**, **removidas**, **líquidas** (`atual − baseline`) e total atual;
 5. anexar a medição a `docs/metrics/loc-history.json` e regerar `docs/metrics/NEW-LOC.md`.
 
-O script aceita `--no-record` para medir sem gravar (útil em inspeção). Nunca editar `loc-history.json` à mão para maquiar números.
+O script aceita `--no-record` (ou `LOC_NEW_DRY=1`) para medir sem gravar (útil em inspeção). Atenção: `npm run loc:new -- --no-record` não funciona, porque o npm intercepta flags `--no-*` como configuração própria; use a variável de ambiente ou chame o script direto. Nunca editar `loc-history.json` à mão para maquiar números.
 
 ## Regras de honestidade
 

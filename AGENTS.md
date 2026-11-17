@@ -131,7 +131,7 @@ A contagem de código novo usa o comando oficial de `cloc` do `README.md`, com b
 
 - **Baseline imutável:** `docs/metrics/loc-baseline.json`, commit `5aa147c` (2026-11-17): **83.517 linhas de código em 751 arquivos**. Nada escrito antes disso entra na contagem.
 - **Obrigação ao fim de cada tarefa:** o papel Especificador/commitador (`opencode/deepseek-v4.1-flash-free`) executa `npm run loc:new` e garante que `docs/metrics/NEW-LOC.md` reflita a última medição antes do handoff.
-- `npm run loc:new -- --no-record` mede sem gravar; use apenas em inspeção.
+- `LOC_NEW_DRY=1 npm run loc:new` (PowerShell: `$env:LOC_NEW_DRY=1; npm run loc:new`) mede sem gravar; use apenas em inspeção. `--no-record` só funciona chamando `node scripts/count-new-loc.mjs --no-record` direto, porque o npm intercepta flags `--no-*`.
 - Nunca editar `loc-baseline.json` nem `loc-history.json` à mão, e nunca inflar a contagem com código artificial, duplicado ou copiado.
 - Se `cloc` não estiver disponível (ou `CLOC_BIN` não apontar para ele), registre a pendência no handoff sem estimar números.
 
