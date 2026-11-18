@@ -27,8 +27,8 @@ Exemplos:
 1. executar o preflight e preservar o working tree;
 2. declarar `SPEC_GATE` e `SPEC` (ou a justificativa de isenção);
 3. criar ou atualizar a SPEC, quando aplicável;
-4. obter autorização explícita para qualquer `git add` ou `git commit`;
-5. commitar somente a SPEC autorizada antes da primeira alteração de implementação;
+4. conferir o escopo solicitado e eventuais restrições explícitas do usuário; commits locais possuem autorização permanente;
+5. commitar somente a SPEC aplicável antes da primeira alteração de implementação;
 6. implementar em escopo restrito;
 7. validar de forma compatível com a mudança;
 8. entregar o diagnóstico `SPEC COMPLIANCE`.
@@ -37,9 +37,9 @@ Se o requisito mudar materialmente durante a implementação, pare a parte afeta
 
 ## Política de commit da SPEC
 
-A existência desta regra não concede permissão para usar Git de forma mutável. Um agente só pode executar `git add` e `git commit` com autorização explícita do usuário.
+Conforme a revisão de 2026-11-18 de `SPEC/2026-11-17-agent-orchestration-and-delivery-standard.md`, agentes devem executar `git add` e `git commit` locais do escopo solicitado sem nova confirmação do usuário. A autorização abrange SPEC, implementação, testes e documentação pertinentes; não permite incluir trabalho alheio. Uma instrução explícita posterior que limite ou proíba commits prevalece.
 
-Quando a autorização for limitada ao commit inicial da SPEC:
+O commit inicial da SPEC deve ser isolado. Quando o usuário limitar expressamente a autorização a esse commit:
 
 - faça staging somente da SPEC indicada;
 - revise `git status --short`, `git diff --cached --check` e os arquivos staged;

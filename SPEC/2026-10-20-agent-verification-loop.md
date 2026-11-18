@@ -22,7 +22,7 @@ Fora de escopo
 - Criar ou modificar funcionalidades eleitorais, APIs, UI, contratos, RBAC, banco de dados ou arquitetura de plugins para demonstrar o loop.
 - Desligar, apagar, enfraquecer ou reescrever testes e verificadores para obter sucesso artificial.
 - Alterar arquivos proibidos, executar migrações, modificar segredos ou acessar serviços de produção.
-- Fazer commits, pushes, rebases, resets ou qualquer alteração de histórico sem autorização explícita.
+- Fazer commits fora do escopo solicitado ou executar pushes, rebases, resets ou outras alterações de histórico sem autorização explícita própria. Commits locais seguem a política permanente de `SPEC/2026-11-17-agent-orchestration-and-delivery-standard.md`.
 - Alegar aprovação de verificações não executadas.
 Gatilho
 Tipo: evento — alteração de código no repositório.
@@ -48,7 +48,7 @@ npm test
 npm run build
 Todos os seis comandos são obrigatórios em cada rodada de verificação, na ordem listada; uma falha não autoriza omitir os comandos seguintes. O porteiro deve registrar, para cada comando, o comando literal, seu exit code e um resumo do resultado. Se um comando não puder ser iniciado por dependência, infraestrutura ou outra causa externa, registrar BLOQUEADO para ele e continuar os demais quando for seguro e possível. Uma rodada com comando BLOQUEADO não pode resultar em PASSOU; deve ser escalada e só pode ser encerrada após resolução ou decisão humana formalmente registrada, sem apresentar a rodada como aprovada.
 
-PASSOU somente quando todos os comandos obrigatórios terminarem com exit code 0, não houver testes apagados/desabilitados nem alterações proibidas, e as mudanças feitas (se houver) respeitarem a SPEC Gate e o escopo autorizado. A aprovação permite encaminhar o resultado à revisão humana, não autoriza commit ou push automaticamente. Não é necessário usar as três tentativas se os critérios já forem satisfeitos.
+PASSOU somente quando todos os comandos obrigatórios terminarem com exit code 0, não houver testes apagados/desabilitados nem alterações proibidas, e as mudanças feitas (se houver) respeitarem a SPEC Gate e o escopo autorizado. A aprovação permite encaminhar o resultado à revisão e ao commit local conforme a política permanente; não autoriza push. Não é necessário usar as três tentativas se os critérios já forem satisfeitos.
 
 TENTAR_NOVAMENTE somente se houver falha real, corrigível em escopo permitido, progresso plausível, autorização humana para a ação e tentativas restantes.
 
@@ -83,13 +83,13 @@ Critérios de aceite
 - [ ] Nenhuma zona proibida é alterada pelo agente durante o loop.
 - [ ] diario/2026-10-13.md registra onde o loop parou, limitações e qual componente seria automatizado primeiro.
 - [ ] O handoff declara SPEC COMPLIANCE, classificação de gate, evidências e eventuais desvios.
-- [ ] Commit somente após autorização explícita, com revisão de diff e rastreabilidade conforme docs/COMMIT-GUIDE.md.
+- [ ] Commit local dentro do escopo solicitado, com revisão de diff e rastreabilidade conforme docs/COMMIT-GUIDE.md, respeitando restrições explícitas do usuário.
 Sequência de entrega
-1. Revisar e aprovar esta SPEC (proposed → approved) e, mediante autorização explícita, commitar somente esta SPEC.
+1. Revisar e aprovar esta SPEC (proposed → approved) e commitar somente esta SPEC antes da implementação, conforme a política vigente de commits locais.
 2. Criar loop/PROMPT.md e modelo inicial de loop/ESTADO.md sem inventar execução.
 3. Executar manualmente o loop em até três sessões; após cada uma, realizar a verificação independente e registrar a decisão.
 4. Escrever diario/2026-10-13.md, identificando também a data efetiva da execução.
-5. Revisar evidências e solicitar autorização específica para o commit final; não fazer push automaticamente.
+5. Revisar evidências e realizar o commit local do escopo validado; não fazer push automaticamente.
 Riscos e mitigação
 - Loop caro ou infinito: limite de três sessões e encerramento por aprovação ou escalação.
 - Aprovação autorreferente: o porteiro executa as verificações separadamente do agente.

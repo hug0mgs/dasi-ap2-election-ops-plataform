@@ -25,7 +25,7 @@ Sem um gate obrigatório e uma hierarquia documental inequívoca, agentes podem:
 
 - instituir um `SPEC Gate` obrigatório antes da primeira alteração de implementação;
 - formalizar quando criar, atualizar, reutilizar ou dispensar uma SPEC;
-- restringir commits de SPEC à autorização explícita e limitada do usuário;
+- restringir commits de SPEC ao escopo solicitado, conforme a política vigente de commits locais;
 - estabelecer `SPEC/` como fonte normativa e `docs/modules/` como documentação descritiva;
 - ampliar categorias, estados e evidências do protocolo de execution issues;
 - tornar o fluxo compatível com diferentes agentes sem duplicar regras por ferramenta;
@@ -129,7 +129,7 @@ Se a classificação não puder ser determinada por falta de requisito indispens
 
 ## Política de commit da SPEC
 
-- Um agente só pode executar `git add` e `git commit` quando o usuário autorizar explicitamente esses atos.
+- Revisão de 2026-11-18: `git add` e `git commit` locais do escopo solicitado possuem autorização permanente, conforme `SPEC/2026-11-17-agent-orchestration-and-delivery-standard.md`, sem nova confirmação por commit.
 - A autorização pode ser limitada ao commit inicial da SPEC. Nesse caso, ela não autoriza commit da implementação nem qualquer outro comando de mutação do histórico.
 - O staging deve conter somente a SPEC autorizada; o agente deve verificar `git status --short` e o diff staged antes do commit.
 - O commit da SPEC deve usar o formato de `docs/COMMIT-GUIDE.md`, incluindo os trailers `Agent:` e `Spec:`.
@@ -244,7 +244,7 @@ O handoff deve declarar separadamente o gate da próxima fase quando a tarefa de
 
 1. O `SPEC Gate` está definido de forma consistente em `AGENTS.md`, `SPEC/README.md` e `docs/AI-PLUGIN-GUIDE.md`.
 2. A política diferencia criação, atualização, reutilização e isenção de SPEC com exemplos claros.
-3. A autorização de commit de SPEC é explícita, limitada e não implica autorização de commit de implementação.
+3. Commits locais seguem a autorização permanente do escopo solicitado; uma limitação explícita a somente SPEC prevalece e não autoriza commit da implementação.
 4. `SPEC/` é definida como normativa e `docs/modules/` como descritiva.
 5. Os cinco status de SPEC e os cinco estados de execution issue estão documentados.
 6. `SPEC_MISSING` e `SPEC_TRACEABILITY` estão disponíveis no protocolo de issues.

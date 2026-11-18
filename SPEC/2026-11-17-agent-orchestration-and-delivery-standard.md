@@ -67,7 +67,7 @@ Regras:
 2. o orquestrador não implementa código diretamente, salvo tarefa explicitamente trivial e registrada;
 3. o implementador não altera SPEC, premissas, contrato público, RBAC ou escopo; divergência volta ao orquestrador;
 4. quando a ferramenta não permitir fixar o modelo de um subagente, registrar a limitação no handoff em vez de supor que o modelo foi respeitado;
-5. o papel de commitador não substitui a autorização explícita do usuário para `git add`/`git commit`.
+5. o papel de commitador executa commits locais do escopo solicitado conforme a autorização permanente descrita na política de commits; não é necessária confirmação do usuário a cada commit.
 
 ## Plano de execução
 
@@ -86,7 +86,7 @@ O plano é **descritivo e operacional**: não substitui a SPEC normativa, não c
 
 1. classificar o `SPEC Gate` antes da primeira alteração de implementação;
 2. criar ou atualizar a SPEC datada em `SPEC/YYYY-MM-DD-<slug>.md`;
-3. commitar a SPEC antes do código correspondente (com autorização);
+3. commitar a SPEC antes do código correspondente, usando a autorização permanente para commits locais do escopo solicitado;
 4. gerar o plano de execução em `docs/plans/`;
 5. implementar em escopo restrito;
 6. validar conforme a matriz de comandos;
@@ -94,6 +94,20 @@ O plano é **descritivo e operacional**: não substitui a SPEC normativa, não c
 8. entregar `SPEC COMPLIANCE` e `EXECUTION ISSUES RECONCILIATION`.
 
 ## Política de commits
+
+### Autorização permanente para commits locais — revisão de 2026-11-18
+
+Por solicitação explícita do usuário, agentes devem executar `git add` e `git commit` das alterações da tarefa solicitada sem pedir nova autorização a cada commit. Isso abrange a SPEC, a implementação, os testes e a documentação pertinentes, preservando commits atômicos por domínio.
+
+- A autorização é limitada ao escopo solicitado. Instruções explícitas posteriores como “não commitar” ou “commitar somente a SPEC” prevalecem.
+- O SPEC Gate continua obrigatório: uma SPEC nova ou alterada deve ser commitada antes da implementação afetada.
+- Antes de cada commit, revisar `git status --short`, o diff staged, os arquivos selecionados, a ausência de credenciais e os resultados das validações aplicáveis. Não incluir trabalho alheio ou alterações não relacionadas.
+- Quando um arquivo contiver mudanças de tarefas diferentes, selecionar somente os trechos pertinentes. Se não for possível isolá-los com confiança, registrar a pendência em vez de incluir mudanças alheias.
+- Falha de validação relevante para a tarefa impede o commit da implementação afetada. Falhas comprovadamente externas devem ser registradas com evidência e decisão explícita do orquestrador.
+- `push`, `rebase`, `squash`, `reset`, `restore`, `force-push` e alterações equivalentes continuam exigindo autorização explícita própria. A permissão permanente de commit não autoriza essas operações.
+- A entrega informa os hashes dos commits efetivamente criados, as validações e as pendências. Nunca declarar commit que não ocorreu.
+
+Esta revisão substitui apenas a exigência anterior de autorização individual para commits locais nas SPECs de governança e verificação. As restrições de escopo, autoria humana, modelos reais, trailers, anterioridade da SPEC e preservação do trabalho existente continuam vigentes. Exclusões de commits em relatos de execuções anteriores descrevem aquelas execuções, não revogam esta política.
 
 - Título no formato `<tipo>(<escopo>): <resumo>` com resumo e corpo em **português do Brasil**.
 - O `escopo` permanece estável e técnico (slug do plugin ou domínio compartilhado, por exemplo `shifts`, `handover`, `shell`, `security`); não traduzir slugs, pois `spec:check` e `check:boundaries` dependem deles.
@@ -150,6 +164,8 @@ Toda SPEC de funcionalidade deve declarar quais camadas cobre e quais ficam pend
 8. Os requisitos de README (URL, ferramentas/modelos, `cloc`) estão documentados com proibição de número fabricado.
 9. A ausência de tarefa funcional definida não é preenchida com escopo inventado.
 10. Nenhuma funcionalidade, plugin, contrato, banco, UI ou automação de CI é alterada por esta SPEC.
+11. Os guias ativos permitem commits locais do escopo solicitado sem nova confirmação, respeitando uma eventual restrição explícita do usuário.
+12. Push e reescrita do histórico continuam separados da autorização de commit local.
 
 ## Validação
 
