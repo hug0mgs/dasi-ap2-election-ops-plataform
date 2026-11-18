@@ -1,8 +1,10 @@
 # SPEC — Conciliação de encerramento do pleito
 
 **Data:** 2026-11-18
-**Status:** `proposed`
+**Status:** `approved`
 **SPEC Gate:** `NEW_SPEC`
+
+**Revisão de retomada (2026-11-18):** `UPDATE_SPEC`. A autorização do usuário permitiu registrar a SPEC em `71ca0f2`; o código parcial já existia antes desse commit. Esta revisão esclarece ambiguidades funcionais antes das correções restantes, sem alegar anterioridade à escrita original.
 
 ## Objetivo
 
@@ -41,15 +43,17 @@ READY | CLOSED | IN_REVIEW → COLLECTING (reabertura motivada)
 
 Regras:
 
-1. Cada pleito possui no máximo uma conciliação ativa (não `CANCELLED` e não `CLOSED`); encerrada a anterior, uma nova pode ser aberta para reconciliação complementar.
-2. `DRAFT` não aceita submissão; `COLLECTING` é o estado de detecção e tratamento.
+1. Cada escopo `(pleito, zona opcional)` possui no máximo uma conciliação ativa (não `CANCELLED` e não `CLOSED`). O escopo sem zona cobre todo o pleito. Encerrada a anterior, uma nova pode ser aberta para reconciliação complementar do mesmo escopo.
+2. `DRAFT` não aceita submissão; a primeira detecção concluída move para `COLLECTING`, estado de detecção e tratamento.
 3. Toda conciliação exige ao menos uma detecção (`lastRefreshedAt`) antes de submissão.
 4. `IN_REVIEW` é alcançado pela submissão e exige zero pendência impeditiva aberta e as assinaturas mínimas.
 5. `PENDING_EXCEPTIONS` representa conciliação com exceções registradas e ainda não aprovadas; não pode ser encerrada.
 6. `READY` exige todas as exceções registradas aprovadas ou revogadas, nenhuma exceção aprovada vencida e pendência impeditiva zerada.
-7. `CLOSED` exige `READY`, motivo/observação de encerramento e usuário distinto de quem registrou a última exceção aceita quando houver exceção aceita.
+7. `CLOSED` exige `READY`, motivo/observação de encerramento e usuário distinto de todos os aprovadores das exceções aceitas da conciliação. A aprovação do agregado exige usuário diferente de quem o submeteu.
 8. `CANCELLED` exige motivo e preserva todos os itens, exceções, assinaturas e histórico.
 9. Reabertura exige motivo, volta para `COLLECTING` e preserva decisões anteriores no histórico.
+10. Tratamento, detecção, registro de exceções e assinaturas não alteram `READY`, `CLOSED` ou `CANCELLED`; `READY` exige reabertura antes dessas alterações. `PENDING_EXCEPTIONS` também admite reabertura motivada.
+11. Submissão com exceções registradas vai para `PENDING_EXCEPTIONS`, desde que não haja outro bloqueio. Aprovação ou revogação da última exceção registrada retorna para `IN_REVIEW`; aprovação do agregado continua sendo uma ação separada.
 
 ## Detecção de pendências
 
@@ -79,6 +83,7 @@ A varredura é idempotente e cobre quatro categorias:
 
 - Origem A: entrega `DELIVERED` sem `proofUrl` e sem vínculo de evidência do tipo `DELIVERY`.
 - Origem B: atribuição de ativo encerrada com `problemDetected = true` sem vínculo de evidência do tipo `ASSET` para o ativo.
+- Na origem B, as atribuições são agrupadas por ativo; um item referencia o ativo e o vínculo esperado também pertence ao ativo.
 - Severidade: `MEDIUM` nas duas origens; não impeditivo por si só, mas entra no cálculo de prontidão.
 - A conciliação não cria evidência: apenas aponta a ausência e aceita exceção justificada.
 
@@ -90,6 +95,7 @@ Regras da detecção:
 4. Um item `PENDING` que reaparece após ter sido `RESOLVED` volta a `PENDING` e registra histórico.
 5. A varredura nunca apaga itens e nunca altera dados dos domínios de origem.
 6. A varredura recalcula contadores e prontidão no mesmo agregado.
+7. Todas as fontes do escopo devem ser percorridas antes de resolver itens ausentes; um limite de consulta não pode ser interpretado como ausência da pendência. Falha de leitura interrompe a detecção sem resolver itens.
 
 ## Exceções justificadas
 
@@ -115,7 +121,7 @@ Regras da detecção:
 - Peso por severidade: `CRITICAL = 4`, `HIGH = 3`, `MEDIUM = 2`, `LOW = 1`.
 - Item `RESOLVED`/`DISMISSED` não penaliza; item `EXCEPTION`/`ACCEPTED` penaliza 40% do peso (risco residual); `PENDING` penaliza integralmente.
 - `readinessScore = max(0, 100 - round(100 * penalidade / max(1, pesoTotal)))`, onde `pesoTotal` considera todos os itens detectados.
-- Assinaturas ausentes de `OPERATIONS_LEAD`/`LOGISTICS` reduzem 10 pontos cada; ausência de `AUDIT` reduz 5.
+- Assinaturas ausentes de `OPERATIONS_LEAD`/`LOGISTICS` reduzem 10 pontos cada; ausência de `FIELD` ou `AUDIT` reduz 5 pontos por papel.
 - O cálculo vive no backend (`src/server/closure-rules.ts`) e é reutilizado por dashboard, detalhe e testes; o frontend não recalcula como fonte de verdade.
 - `blockingItems` conta apenas `PENDING` impeditivo; `readyToClose` é a conjunção de bloqueio zero, exceções sem pendência e assinaturas mínimas.
 
@@ -174,6 +180,8 @@ Requisitos:
 - exceções com justificativa, risco, mitigação, validade e aprovação segregada visível;
 - assinaturas com papéis, quem assinou e o que falta;
 - histórico com ação, autor, data, transição e resumo;
+- formulários usam categorias e riscos selecionáveis; limites mínimos de texto refletem os DTOs; falhas preservam os valores preenchidos;
+- ações são habilitadas apenas nos estados aplicáveis; o painel inclui conciliações aguardando assinaturas, revisão, aprovação de exceções e encerramento;
 - estados de carregamento, erro, vazio e ausência de permissão explícitos;
 - acessibilidade: foco visível, rótulos textuais, não depender apenas de cor, navegação por teclado;
 - CSS específico em CSS Module do plugin; o shell recebe apenas o manifest.
@@ -206,7 +214,7 @@ O schema deve representar:
 
 Constraints:
 
-- `code` único por conciliação;
+- `code` globalmente único por conciliação, inclusive entre pleitos do mesmo ano;
 - `(reconciliationId, category, sourceType, sourceId)` único para item;
 - `(reconciliationId, role, userId)` único para assinatura;
 - índices por pleito/estado, categoria/severidade e status/validade.
@@ -214,7 +222,7 @@ Constraints:
 ## Critérios de aceite
 
 1. Usuário autorizado abre conciliação para um pleito e dispara detecção; itens reais de ativos, entregas, despachos e evidências aparecem com origem rastreável.
-2. Detecção repetida não duplica itens; item cuja origem deixou de existir é resolvido automaticamente; item tratado não é reaberto sem ação explícita.
+2. Detecção repetida não duplica itens; item cuja origem deixou de existir é resolvido automaticamente; item `RESOLVED` reaparecido volta a `PENDING`, inclusive após resolução manual. Itens `EXCEPTION`, `ACCEPTED` e `DISMISSED` preservam a decisão até ação explícita.
 3. Resolver, dispensar e reabrir item exigem motivo e registram histórico com ator e data.
 4. Exceção justificada exige justificativa, risco e aprovação por usuário diferente; exceção vencida bloqueia encerramento.
 5. Submissão bloqueia com pendência impeditiva aberta ou assinaturas mínimas ausentes; mensagem identifica o que falta.
