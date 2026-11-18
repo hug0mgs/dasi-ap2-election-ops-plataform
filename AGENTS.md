@@ -30,7 +30,7 @@ Antes da primeira alteração de implementação, declare exatamente uma classif
 - `EXISTING_SPEC_OK`: a SPEC existente cobre integralmente a tarefa; informe seu caminho;
 - `SPEC_EXEMPT`: não há mudança funcional ou normativa; registre uma justificativa objetiva.
 
-`SPEC/README.md` é a referência canônica do gate. Documentos em `docs/modules/`, prompts e código existente não substituem uma SPEC normativa. Uma autorização para commitar a SPEC é limitada ao que o usuário autorizou e não permite commitar implementação, fazer push ou reescrever histórico.
+`SPEC/README.md` é a referência canônica do gate. Documentos em `docs/modules/`, prompts e código existente não substituem uma SPEC normativa. Commits locais de SPEC e implementação do escopo solicitado possuem autorização permanente, sem nova confirmação por commit. Uma restrição explícita do usuário prevalece. Push e reescrita de histórico exigem autorização própria.
 
 ## Contexto mínimo
 
@@ -85,7 +85,7 @@ Regras:
 - o orquestrador não implementa código, salvo tarefa trivial explicitamente registrada;
 - o implementador não altera SPEC, premissas, contrato público, RBAC ou escopo; divergência volta ao orquestrador;
 - se a ferramenta não permitir fixar o modelo do subagente, registre a limitação no handoff em vez de supor conformidade;
-- papel de commitador não substitui a autorização explícita do usuário para `git add`/`git commit`.
+- o commitador executa `git add`/`git commit` locais do escopo solicitado sem pedir nova autorização, respeitando restrições explícitas do usuário e a política de `SPEC/README.md`.
 
 ## Plano de execução
 
@@ -188,4 +188,4 @@ Spec: SPEC/2026-11-17-loc-baseline-and-new-line-tracking.md
 
 O bloco `Participação de agentes:` é **corpo da mensagem**, separado por linha em branco dos trailers. `npm run spec:check` exige exatamente **um** trailer `Agent:` — o valor aceito é apenas `provedor/modelo` (`[A-Za-z0-9._-]`, uma única barra). Por isso não se cria um trailer por agente: a lista completa vive no corpo e o trailer nomeia quem executou o commit.
 
-Não execute commit, push, rebase, squash ou force-push sem pedido explícito. Se o usuário não pedir o commit, sugira ao final uma mensagem pronta no formato oficial.
+Execute commits locais atômicos do escopo solicitado após as validações aplicáveis, sem pedir confirmação a cada commit. Inclua apenas arquivos ou trechos pertinentes, preservando alterações de outras tarefas. Se o usuário proibir commits ou limitar a autorização à SPEC, respeite a restrição. Informe os hashes criados no handoff; quando houver bloqueio, registre a causa e a mensagem sugerida. Push, rebase, squash, reset, restore e force-push continuam exigindo pedido explícito próprio.

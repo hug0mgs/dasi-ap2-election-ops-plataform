@@ -13,7 +13,7 @@ Plugins são unidades autônomas de domínio. Trabalhe localmente e preserve a f
 
 Não percorra todos os plugins para “entender o sistema”. Se precisar de padrão estrutural, consulte apenas um plugin semelhante.
 
-Documentação em `docs/modules/` não substitui a SPEC normativa. Se o gate resultar em `NEW_SPEC` ou `UPDATE_SPEC`, a SPEC deve ser commitada antes da alteração do plugin; a autorização desse commit não autoriza o commit da implementação.
+Documentação em `docs/modules/` não substitui a SPEC normativa. Se o gate resultar em `NEW_SPEC` ou `UPDATE_SPEC`, a SPEC deve ser commitada antes da alteração do plugin. Commits locais do escopo solicitado possuem autorização permanente conforme `SPEC/README.md`, salvo restrição explícita do usuário. Push e reescrita do histórico exigem autorização própria.
 
 ## Regras
 

@@ -223,17 +223,19 @@ Não declare um comando como aprovado se ele não foi executado.
 
 ## 10. Agentes de IA e Git
 
-Agentes não devem executar `git commit`, `git push`, `git reset`, `git rebase`, `git merge --squash` ou `git push --force` sem pedido explícito do usuário.
+Agentes devem executar `git add` e `git commit` locais das alterações da tarefa solicitada sem pedir confirmação a cada commit, conforme a revisão de 2026-11-18 de `SPEC/2026-11-17-agent-orchestration-and-delivery-standard.md`. A autorização abrange SPEC, implementação, testes e documentação pertinentes. Uma instrução explícita posterior que proíba commits ou limite a autorização à SPEC prevalece.
 
-Quando o usuário não pedir o commit automático, a entrega do agente deve incluir uma **mensagem de commit sugerida** já no formato deste guia.
+A autorização permanente não permite incluir alterações de outras tarefas. Em arquivos compartilhados, selecione apenas os trechos pertinentes; se não puder isolá-los com confiança, registre o bloqueio. A entrega informa hashes reais dos commits criados. Quando o commit estiver impedido por restrição explícita ou validação relevante pendente, informe a causa e uma mensagem sugerida.
 
-Quando o usuário pedir para criar o commit, o agente deve:
+Antes de cada commit local, o agente deve:
 
 1. confirmar a SPEC associada;
-2. revisar os arquivos staged;
+2. revisar `git status --short`, os arquivos staged e o diff staged, conferindo escopo e ausência de credenciais;
 3. executar as validações aplicáveis;
 4. criar o commit no formato deste documento;
 5. não fazer push automaticamente, salvo pedido explícito.
+
+`git push`, `git reset`, `git restore`, `git rebase`, `git merge --squash`, `git push --force` e operações equivalentes continuam exigindo autorização explícita própria. Falhas de validação relevantes para a tarefa impedem o commit da implementação afetada; falhas comprovadamente externas devem ser documentadas com evidência e decisão do orquestrador.
 
 ## 11. Exemplos para este projeto
 

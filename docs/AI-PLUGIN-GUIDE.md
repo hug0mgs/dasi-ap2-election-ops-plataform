@@ -90,7 +90,7 @@ Para funcionalidade nova ou alteração material de comportamento:
 
 A ordem do histórico importa. Se o requisito mudar durante a implementação, atualize e commite a SPEC antes do próximo commit de código. Specs reconstruídas retrospectivamente não devem ser apresentadas como se tivessem antecedido código antigo.
 
-Uma autorização para commitar a SPEC é limitada ao que o usuário autorizou. Ela não autoriza commit da implementação, push ou reescrita do histórico. A entrega deve incluir o bloco `SPEC COMPLIANCE` definido em `SPEC/README.md`.
+Commits locais de SPEC e implementação do escopo solicitado possuem autorização permanente conforme `SPEC/README.md`; não pedir nova confirmação por commit. Restrições explícitas do usuário prevalecem. Push e reescrita do histórico exigem autorização própria. A entrega deve incluir hashes reais e o bloco `SPEC COMPLIANCE` definido em `SPEC/README.md`.
 
 Após existir um commit de implementação, valide seus trailers e a anterioridade da SPEC com `npm run spec:check` ou `npm run spec:check -- <base>..HEAD`. O checker é objetivo e não substitui a classificação humana do SPEC Gate.
 
@@ -285,7 +285,7 @@ Regras resumidas:
 - um commit por unidade lógica revisável;
 - não misturar plugins independentes;
 - não usar commits genéricos como `update`, `final` ou `ajustes`;
-- não criar commit/push/rebase/squash/force-push sem pedido explícito;
+- criar commits locais somente do escopo solicitado, após revisão e validação, sem nova confirmação; respeitar restrições explícitas do usuário e exigir autorização própria para push/rebase/squash/reset/restore/force-push;
 - se não houver pedido de commit, entregar uma mensagem de commit sugerida no formato oficial.
 
 Exemplo:
