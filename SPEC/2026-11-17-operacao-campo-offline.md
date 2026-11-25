@@ -1,7 +1,7 @@
 # SPEC — Operação de campo sem conexão
 
 **Data:** 2026-11-17
-**Status:** `proposed`
+**Status:** `implemented`
 **SPEC Gate:** `NEW_SPEC`
 
 ## Objetivo
@@ -51,3 +51,14 @@ Permitir que um usuário autenticado registre ocorrências, atualize o estado de
 ## Fora de escopo
 
 Cache completo de leitura, anexos offline, geolocalização, aprovação de checklist offline, atribuição de equipes offline, sincronização entre dispositivos antes do envio e sincronização em background com a aplicação fechada.
+
+## Evidências de conclusão — 2026-11-25
+
+O usuário autorizou concluir a implementação existente. A retomada preservou os requisitos desta SPEC (`EXISTING_SPEC_OK`), corrigiu transporte/retry, isolamento e concorrência, e cobriu também API indisponível com a rede ativa. A API cliente recebeu somente um argumento opcional compatível para preservar o UUID da primeira tentativa; nenhuma rota, permissão ou migration nova foi adicionada.
+
+- 36 testes da fila junto ao código e 822 testes globais em 78 arquivos passaram.
+- 13 E2E passaram em 26,3 segundos com API, navegador e PostgreSQL reais; o schema de validação foi criado vazio usando somente as 27 migrations versionadas e o seed.
+- Typecheck, lint, validação Prisma, fronteiras entre 38 workspaces e build de API/web passaram.
+- Matriz critério → implementação → teste: `docs/modules/offline.md`.
+- Limitações e reconciliação: `docs/execution-issues/2026-11-25-validacao-operacao-offline.md`. A limpeza física concorrente do array legado e o teardown de webServers no Windows continuam documentados; não há promessa de apagamento seguro de bytes ou de bootstrap integral offline.
+- A suíte E2E global da plataforma não foi executada; a evidência de navegador cobre o recorte offline desta SPEC. Os servidores e o container exclusivos de teste foram encerrados ao final.

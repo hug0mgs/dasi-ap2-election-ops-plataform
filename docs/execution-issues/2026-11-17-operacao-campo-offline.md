@@ -47,3 +47,11 @@
 - `npm test` global passou com 789 testes em 78 arquivos; os testes de `reports` foram corrigidos pela configuração de decorators do próprio plugin, sem relaxar cobertura.
 - `npm run typecheck`, `npm run lint`, `npm run check:boundaries`, `npm run build` e `npm run db:validate` passaram.
 - Integração com API/PostgreSQL real e E2E continuam pendentes por ausência de infraestrutura determinística; não há evidência de execução desses cenários.
+
+## Reavaliação de validação em 2026-11-25
+
+- A pendência de infraestrutura do recorte offline foi superada: PostgreSQL exclusivo, schema vazio com 27 migrations versionadas, seed e API real.
+- 36 testes da fila e 822 testes globais em 78 arquivos passaram. Typecheck, lint, fronteiras, Prisma validate e build API/web passaram.
+- 13 cenários E2E offline passaram, exit code 0 em 26,3 segundos, incluindo API indisponível com rede ativa, resposta perdida após gravação, concorrência, RBAC e revogação de permissão. Não representa execução da suíte E2E global.
+- O teardown de webServers do Playwright no Windows exigiu configuração temporária ignorada com serviços externos exclusivos; serviços e container de teste foram encerrados ao final.
+- A limpeza física concorrente de dados legados permanece limitada e documentada. Registro completo: `docs/execution-issues/2026-11-25-validacao-operacao-offline.md`; matriz de aceite: `docs/modules/offline.md`.
