@@ -65,7 +65,7 @@ O modelo é próprio do plugin, não uma cópia de `CommandCenterSavedView`: a f
 
 ## Export
 
-CSV e PDF mantidos; `GET /reports/export.json` devolve JSON estruturado com escopo, seções dos relatórios por domínio e séries quando solicitadas. Todos exigem `reports.export` e respeitam o escopo.
+CSV e PDF aceitam exportação ad hoc ou `viewId` de uma `ReportSavedView`. Com `viewId`, o backend aplica exclusivamente os filtros persistidos, exige que a visão pertença ao ator ou seja compartilhada, identifica a visão no arquivo e gera nome de download seguro. `reports.manage` não substitui `reports.export`. `GET /reports/export.json` continua ad hoc e devolve JSON estruturado com escopo, seções dos relatórios por domínio e séries quando solicitadas. Todos exigem `reports.export` e respeitam o escopo.
 
 ## Rotas
 

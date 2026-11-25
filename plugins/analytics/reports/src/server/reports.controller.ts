@@ -7,6 +7,7 @@ import {
   CreateReportViewDto,
   DrilldownQueryDto,
   ExportJsonQueryDto,
+  ExportReportQueryDto,
   SlaQueryDto,
   TimeseriesQueryDto,
   UpdateReportViewDto,
@@ -40,7 +41,48 @@ export class ReportsController {
   @Patch("views/:id") updateView(@Param("id") id: string, @Body() dto: UpdateReportViewDto, @Req() request: AuthenticatedRequest) { return this.views.update(id, dto, request.user.id, request.user.permissions); }
   @Delete("views/:id") removeView(@Param("id") id: string, @Req() request: AuthenticatedRequest) { return this.views.remove(id, request.user.id, request.user.permissions); }
 
-  @Permissions(PERMISSIONS.reports.export) @Get("export.csv") async csv(@Query() query: ReportQueryDto, @Res() response: Response) { const content = await this.service.csv(query); response.setHeader("Content-Type", "text/csv; charset=utf-8"); response.setHeader("Content-Disposition", "attachment; filename=relatorio-election-ops.csv"); response.send(`${content}`); }
-  @Permissions(PERMISSIONS.reports.export) @Get("export.pdf") async pdf(@Query() query: ReportQueryDto, @Res() response: Response) { const content = await this.service.pdf(query); response.setHeader("Content-Type", "application/pdf"); response.setHeader("Content-Disposition", "attachment; filename=relatorio-election-ops.pdf"); response.send(content); }
+  @Permissions(PERMISSIONS.reports.read, PERMISSIONS.reports.export) @Get("export.csv") async csv(@Query() query: ExportReportQueryDto, @Req() request: AuthenticatedRequest, @Res() response: Response) { const resolved = await this.resolveExport(query, request.user.id); const content = await this.service.csv(resolved.query, resolved.view); response.setHeader("Content-Type", "text/csv; charset=utf-8"); response.setHeader("Content-Disposition", `attachment; filename=${resolved.filename}.csv`); response.send(`${content}`); }
+  @Permissions(PERMISSIONS.reports.read, PERMISSIONS.reports.export) @Get("export.pdf") async pdf(@Query() query: ExportReportQueryDto, @Req() request: AuthenticatedRequest, @Res() response: Response) { const resolved = await this.resolveExport(query, request.user.id); const content = await this.service.pdf(resolved.query, resolved.view); response.setHeader("Content-Type", "application/pdf"); response.setHeader("Content-Disposition", `attachment; filename=${resolved.filename}.pdf`); response.send(content); }
   @Permissions(PERMISSIONS.reports.export) @Get("export.json") exportJson(@Query() query: ExportJsonQueryDto) { return this.service.exportJson(query); }
+
+  private async resolveExport(query: ExportReportQueryDto, actorId: string) {
+    if (!query.viewId)
+      return { query, filename: "relatorio-election-ops", view: undefined };
+    const saved = await this.views.resolveForExport(query.viewId, actorId);
+    const filters = saved.filters as Record<string, unknown>;
+    const reportQuery: ReportQueryDto = {
+      from: this.stringFilter(filters.from),
+      to: this.stringFilter(filters.to),
+      electionId: this.stringFilter(filters.electionId),
+      zoneId: this.stringFilter(filters.electoralZoneId),
+      pollingPlaceId: this.stringFilter(filters.pollingPlaceId),
+      categoryId: this.stringFilter(filters.categoryId),
+      status: this.stringFilter(filters.status),
+      severity: this.stringFilter(filters.severity),
+    };
+    const metrics = Array.isArray(saved.metricsJson)
+      ? saved.metricsJson.filter((metric): metric is string => typeof metric === "string")
+      : [];
+    return {
+      query: reportQuery,
+      filename: this.exportFilename(saved.name),
+      view: {
+        name: saved.name,
+        ownerName: saved.owner?.name ?? saved.ownerId,
+        shared: saved.shared,
+        metrics,
+        granularity: saved.granularity,
+      },
+    };
+  }
+
+  private stringFilter(value: unknown) {
+    return typeof value === "string" && value.trim() ? value.trim() : undefined;
+  }
+
+  private exportFilename(name: string) {
+    const slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+    return slug ? `relatorio-${slug}` : "relatorio-election-ops";
+  }
 }

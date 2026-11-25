@@ -78,4 +78,30 @@ describe("ownership e compartilhamento", () => {
     const { instance } = service(prisma);
     await expect(instance.update("view-9", { name: "Nova" }, "user-1", [])).rejects.toThrow(/nao pode alterar/);
   });
+
+  it("resolve view privada para o owner", async () => {
+    const prisma = createPrisma();
+    prisma.reportSavedView.findUnique.mockResolvedValue({ id: "view-1", ownerId: "user-1", shared: false, owner: { id: "user-1", name: "Operador" } });
+    const { instance } = service(prisma);
+    await expect(instance.resolveForExport("view-1", "user-1")).resolves.toMatchObject({ id: "view-1" });
+  });
+
+  it("resolve view compartilhada para outro usuario", async () => {
+    const prisma = createPrisma();
+    prisma.reportSavedView.findUnique.mockResolvedValue({ id: "view-1", ownerId: "owner", shared: true, owner: { id: "owner", name: "Supervisor" } });
+    const { instance } = service(prisma);
+    await expect(instance.resolveForExport("view-1", "user-1")).resolves.toMatchObject({ shared: true });
+  });
+
+  it("rejeita exportacao de view privada de outro owner", async () => {
+    const prisma = createPrisma();
+    prisma.reportSavedView.findUnique.mockResolvedValue({ id: "view-1", ownerId: "owner", shared: false });
+    const { instance } = service(prisma);
+    await expect(instance.resolveForExport("view-1", "user-1")).rejects.toThrow(/nao pode exportar/);
+  });
+
+  it("retorna not found para view inexistente", async () => {
+    const { instance } = service(createPrisma());
+    await expect(instance.resolveForExport("missing", "user-1")).rejects.toThrow(/nao encontrada/);
+  });
 });

@@ -20,6 +20,12 @@ export interface ZonesQuery { electionId: string; from?: string; to?: string; me
 
 function download(blob: Blob, filename: string) { const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url); }
 
+function exportFilename(viewName: string | undefined, extension: "csv" | "pdf") {
+  const slug = viewName?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+  return `${slug ? `relatorio-${slug}` : "relatorio-election-ops"}.${extension}`;
+}
+
 /** SlaQueryDto usa `electoralZoneId`; remapeia os filtros compartilhados. */
 function toScopeQuery({ from, to, electionId, zoneId, electoralZoneId, pollingPlaceId, includeSimulated }: ReportFilters) {
   return { from, to, electionId, electoralZoneId: electoralZoneId ?? zoneId, pollingPlaceId, includeSimulated };
@@ -38,8 +44,8 @@ export const reportsService = {
   zones: (query: ZonesQuery) => apiClient.get<ZonesReport>("/reports/zones", { query }),
   drilldown: (query: DrilldownQuery) => apiClient.get<DrilldownResult>("/reports/drilldown", { query }),
   exportJson: (query: ReportFilters & { metrics?: string } = {}) => apiClient.get<ExportJsonResult>("/reports/export.json", { query }),
-  exportCsv: async (query: ReportFilters = {}) => download(await apiClient.getBlob("/reports/export.csv", { query }), "relatorio-election-ops.csv"),
-  exportPdf: async (query: ReportFilters = {}) => download(await apiClient.getBlob("/reports/export.pdf", { query }), "relatorio-election-ops.pdf"),
+  exportCsv: async (query: ReportFilters & { viewId?: string } = {}, viewName?: string) => download(await apiClient.getBlob("/reports/export.csv", { query }), exportFilename(viewName, "csv")),
+  exportPdf: async (query: ReportFilters & { viewId?: string } = {}, viewName?: string) => download(await apiClient.getBlob("/reports/export.pdf", { query }), exportFilename(viewName, "pdf")),
   downloadJson: (data: ExportJsonResult) => { const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }); download(blob, "relatorio-election-ops.json"); },
   views: () => apiClient.get<SavedReportView[]>("/reports/views"),
   createView: (input: SavedReportViewInput) => apiClient.post<SavedReportView, SavedReportViewInput>("/reports/views", input),

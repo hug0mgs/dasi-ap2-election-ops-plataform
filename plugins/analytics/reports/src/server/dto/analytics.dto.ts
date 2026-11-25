@@ -70,6 +70,11 @@ export class ExportJsonQueryDto extends ReportQueryDto {
   @IsString() @IsOptional() metrics?: string;
 }
 
+/** Export CSV/PDF ad hoc ou baseado em uma saved view (SPEC 2.8). */
+export class ExportReportQueryDto extends ReportQueryDto {
+  @IsString() @IsOptional() viewId?: string;
+}
+
 /** Saved analytics views (SPEC 2.7). */
 export class CreateReportViewDto {
   @IsString() @Length(2, 80) name!: string;

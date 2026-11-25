@@ -28,11 +28,13 @@ function toInput(form: ViewForm): SavedReportViewInput {
 
 export function ReportsViewsPage() {
   const canManage = useHasPermission("reports.manage").allowed;
+  const canExport = useHasPermission("reports.export").allowed;
   const views = useAsync(reportsService.views, []);
   const references = useAsync(reportsService.references, []);
   const [form, setForm] = useState<ViewForm>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<Error>();
+  const [exporting, setExporting] = useState<string>();
 
   const reset = () => { setForm(EMPTY_FORM); setError(undefined); };
   const changeFilter = (key: keyof ReportFilters, value: string) => setForm((current) => ({ ...current, filters: { ...current.filters, [key]: value || undefined } }));
@@ -73,6 +75,20 @@ export function ReportsViewsPage() {
     catch (cause) { setError(cause instanceof Error ? cause : new Error("Operação não concluída.")); }
   };
 
+  const exportView = async (view: SavedReportView, kind: "csv" | "pdf") => {
+    setExporting(`${view.id}:${kind}`);
+    setError(undefined);
+    try {
+      const query = { viewId: view.id };
+      if (kind === "csv") await reportsService.exportCsv(query, view.name);
+      else await reportsService.exportPdf(query, view.name);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause : new Error("Não foi possível exportar a visão."));
+    } finally {
+      setExporting(undefined);
+    }
+  };
+
   return <section className={styles.page}>
     <header className={styles.header}><div><span className={styles.tag}>CONFIGURAÇÃO</span><h1>Visões salvas</h1><p>Filtros e métricas por operador. Visões privadas são visíveis apenas para o dono; compartilhadas exigem <code>reports.manage</code>. Limite de 20 visões por usuário.</p></div></header>
     <ReportNav />
@@ -89,6 +105,10 @@ export function ReportsViewsPage() {
             <p className={styles.muted}>{view.granularity} · dono {view.owner?.name ?? view.ownerId}{Array.isArray(view.metricsJson) && view.metricsJson.length ? ` · ${view.metricsJson.map(metricLabel).join(", ")}` : ""}</p>
           </div>
           <div className={styles.viewCardActions}>
+            {canExport && <>
+              <Button secondary disabled={exporting !== undefined} onClick={() => void exportView(view, "csv")}>{exporting === `${view.id}:csv` ? "Exportando…" : "Exportar CSV"}</Button>
+              <Button secondary disabled={exporting !== undefined} onClick={() => void exportView(view, "pdf")}>{exporting === `${view.id}:pdf` ? "Exportando…" : "Exportar PDF"}</Button>
+            </>}
             {view.editable ? <>
               <Button secondary onClick={() => startEdit(view)}>Editar</Button>
               <Button secondary onClick={() => void act(() => reportsService.updateView(view.id, { isDefault: !view.isDefault }))}>{view.isDefault ? "Remover padrão" : "Definir padrão"}</Button>

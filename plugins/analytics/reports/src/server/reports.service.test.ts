@@ -63,10 +63,37 @@ describe("ReportsService", () => {
     expect(csv).toContain('"Zona 1"');
   });
 
+  it("identifica a view salva no CSV", async () => {
+    const instance = new ReportsService({} as PrismaService);
+    vi.spyOn(instance, "executive").mockResolvedValue(report);
+    vi.spyOn(instance, "timeseries").mockResolvedValue({ metric: "incidentsOpenedCritical", granularity: "day", from: "2026-10-01", to: "2026-10-02", bucketCount: 1, buckets: [{ bucketStart: "2026-10-01", bucketEnd: "2026-10-02", value: 2, sampleSize: 2 }], totals: { value: 2, sampleSize: 2 } });
+    const csv = await instance.csv({ from: "2026-10-01", to: "2026-10-02" }, { name: "Críticos por zona", ownerName: "Supervisor", shared: true, granularity: "day", metrics: ["incidentsOpenedCritical"] });
+    expect(csv).toContain('"Visão salva","Críticos por zona"');
+    expect(csv).toContain('"Dono","Supervisor"');
+    expect(csv).toContain('"Compartilhada","Sim"');
+    expect(csv).toContain('"Métricas","incidentsOpenedCritical"');
+    expect(csv).toContain('"Série: incidentsOpenedCritical"');
+    expect(instance.timeseries).toHaveBeenCalledWith(expect.objectContaining({ metric: "incidentsOpenedCritical", granularity: "day" }));
+  });
+
+  it("rejeita view com métricas sem janela temporal", async () => {
+    const instance = new ReportsService({} as PrismaService);
+    vi.spyOn(instance, "executive").mockResolvedValue(report);
+    await expect(instance.csv({}, { name: "Sem janela", ownerName: "Operador", shared: false, granularity: "day", metrics: ["incidentsOpened"] })).rejects.toThrow(/from.*to/);
+  });
+
   it("gera um PDF válido a partir do relatório", async () => {
     const instance = new ReportsService({} as PrismaService);
     vi.spyOn(instance, "executive").mockResolvedValue(report);
     const pdf = await instance.pdf({});
+    expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
+    expect(pdf.length).toBeGreaterThan(500);
+  });
+
+  it("gera PDF válido para uma view salva", async () => {
+    const instance = new ReportsService({} as PrismaService);
+    vi.spyOn(instance, "executive").mockResolvedValue(report);
+    const pdf = await instance.pdf({}, { name: "Operação diária", ownerName: "Operador", shared: false, granularity: "day", metrics: [] });
     expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
     expect(pdf.length).toBeGreaterThan(500);
   });

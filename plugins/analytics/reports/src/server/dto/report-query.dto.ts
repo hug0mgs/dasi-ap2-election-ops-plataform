@@ -14,5 +14,6 @@ export class ReportQueryDto {
   @IsString() @IsOptional() pollingPlaceId?: string;
   @IsString() @IsOptional() categoryId?: string;
   @IsString() @IsOptional() status?: string;
+  @IsString() @IsOptional() severity?: string;
   @Transform(({ value }) => parseBoolean(value)) @IsBoolean() @IsOptional() includeSimulated?: boolean;
 }

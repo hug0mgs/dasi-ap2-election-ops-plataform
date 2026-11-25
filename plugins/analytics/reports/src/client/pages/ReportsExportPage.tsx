@@ -3,12 +3,14 @@ import { Button, Card, ErrorState, Field, Input, Loading, Select, useAsync } fro
 import { ReportNav } from "../components/ReportNav";
 import { REPORT_METRICS, metricLabel } from "../metrics";
 import { reportsService } from "../../services/reportsService";
-import type { ExportJsonResult, ReportFilters } from "../../types";
+import type { ExportJsonResult, ReportFilters, SavedReportView } from "../../types";
 import styles from "../../styles/overview.module.css";
 
 export function ReportsExportPage() {
   const references = useAsync(reportsService.references, []);
+  const views = useAsync(reportsService.views, []);
   const [filters, setFilters] = useState<ReportFilters>({});
+  const [viewId, setViewId] = useState("");
   const [metrics, setMetrics] = useState<string[]>([]);
   const [busy, setBusy] = useState<string>();
   const [error, setError] = useState<Error>();
@@ -17,13 +19,14 @@ export function ReportsExportPage() {
   const change = (key: keyof ReportFilters, value: string) => setFilters((current) => ({ ...current, [key]: value || undefined }));
   const zones = references.data?.zones.filter((zone) => !filters.electionId || zone.electionId === filters.electionId) ?? [];
   const places = references.data?.places.filter((place) => !filters.zoneId || place.electoralZoneId === filters.zoneId) ?? [];
+  const selectedView = views.data?.find((view) => view.id === viewId);
 
   const run = async (kind: "csv" | "pdf" | "json") => {
     setBusy(kind);
     setError(undefined);
     try {
-      if (kind === "csv") await reportsService.exportCsv(filters);
-      else if (kind === "pdf") await reportsService.exportPdf(filters);
+      if (kind === "csv") await reportsService.exportCsv(selectedView ? { viewId: selectedView.id } : filters, selectedView?.name);
+      else if (kind === "pdf") await reportsService.exportPdf(selectedView ? { viewId: selectedView.id } : filters, selectedView?.name);
       else {
         const data = await reportsService.exportJson({ ...filters, metrics: metrics.length ? metrics.join(",") : undefined });
         reportsService.downloadJson(data);
@@ -40,24 +43,38 @@ export function ReportsExportPage() {
     <header className={styles.header}><div><span className={styles.tag}>ANALYTICS</span><h1>Exportação</h1><p>Exporte os relatórios em CSV, PDF ou JSON estruturado (seções por domínio mais séries temporais selecionadas).</p></div></header>
     <ReportNav />
     <Card>
-      <h2>Filtros</h2>
-      <div className={styles.filters}>
+      <h2>Fonte da exportação</h2>
+      {views.loading && <Loading label="Carregando visões salvas…" />}
+      {views.error && <ErrorState error={views.error} onRetry={views.reload} />}
+      <Field label="Visão salva (opcional)">
+        <Select value={viewId} onChange={(event) => setViewId(event.target.value)}>
+          <option value="">Exportação ad hoc</option>
+          {views.data?.map((view) => <option key={view.id} value={view.id}>{view.name}{view.shared ? " · compartilhada" : ""}</option>)}
+        </Select>
+      </Field>
+      {selectedView && <SavedViewSummary view={selectedView} />}
+      {!selectedView && <>
+        <h2>Filtros</h2>
+        <div className={styles.filters}>
         <Input aria-label="Data inicial" type="date" value={filters.from ?? ""} onChange={(event) => change("from", event.target.value)} />
         <Input aria-label="Data final" type="date" value={filters.to ?? ""} onChange={(event) => change("to", event.target.value)} />
         <Select aria-label="Pleito" value={filters.electionId ?? ""} onChange={(event) => change("electionId", event.target.value)}><option value="">Todos os pleitos</option>{references.data?.elections.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select>
         <Select aria-label="Zona" value={filters.zoneId ?? ""} onChange={(event) => change("zoneId", event.target.value)}><option value="">Todas as zonas</option>{zones.map((item) => <option key={item.id} value={item.id}>Zona {item.number} · {item.name}</option>)}</Select>
         <Select aria-label="Local" value={filters.pollingPlaceId ?? ""} onChange={(event) => change("pollingPlaceId", event.target.value)}><option value="">Todos os locais</option>{places.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select>
-      </div>
-      <Field label="Métricas para séries temporais no JSON (opcional; exige período)">
+        </div>
+      </>}
+      {selectedView && selectedView.metricsJson.length > 0 && (!selectedView.filters.from || !selectedView.filters.to) &&
+        <p className={styles.warning}>Esta visão seleciona métricas, mas não possui período completo. Defina “De” e “Até” na visão antes de exportar.</p>}
+      {!selectedView && <Field label="Métricas para séries temporais no JSON (opcional; exige período)">
         <select className={styles.multiSelect} multiple size={6} value={metrics} onChange={(event) => setMetrics(Array.from(event.target.selectedOptions).map((option) => option.value))}>
           {REPORT_METRICS.map((metric) => <option key={metric} value={metric}>{metricLabel(metric)}</option>)}
         </select>
-      </Field>
+      </Field>}
       {error && <ErrorState error={error} />}
       <div className={styles.actions}>
-        <Button disabled={busy !== undefined} onClick={() => void run("csv")}>{busy === "csv" ? "Exportando…" : "Exportar CSV"}</Button>
-        <Button disabled={busy !== undefined} onClick={() => void run("pdf")}>{busy === "pdf" ? "Exportando…" : "Exportar PDF"}</Button>
-        <Button disabled={busy !== undefined} onClick={() => void run("json")}>{busy === "json" ? "Exportando…" : "Exportar JSON"}</Button>
+        <Button disabled={busy !== undefined || Boolean(selectedView?.metricsJson.length && (!selectedView.filters.from || !selectedView.filters.to))} onClick={() => void run("csv")}>{busy === "csv" ? "Exportando…" : "Exportar CSV"}</Button>
+        <Button disabled={busy !== undefined || Boolean(selectedView?.metricsJson.length && (!selectedView.filters.from || !selectedView.filters.to))} onClick={() => void run("pdf")}>{busy === "pdf" ? "Exportando…" : "Exportar PDF"}</Button>
+        <Button disabled={busy !== undefined || Boolean(selectedView)} onClick={() => void run("json")}>{busy === "json" ? "Exportando…" : "Exportar JSON"}</Button>
       </div>
     </Card>
     <Card>
@@ -69,4 +86,19 @@ export function ReportsExportPage() {
       </> : <p className={styles.muted}>Gere o export JSON para visualizar a estrutura aqui.</p>}
     </Card>
   </section>;
+}
+
+function SavedViewSummary({ view }: { view: SavedReportView }) {
+  const filters = Object.entries(view.filters ?? {});
+  return <div className={styles.viewSummary}>
+    <h3>{view.name}</h3>
+    <p>{view.description ?? "Sem descrição."}</p>
+    <dl>
+      <div><dt>Dono</dt><dd>{view.owner?.name ?? view.ownerId}</dd></div>
+      <div><dt>Visibilidade</dt><dd>{view.shared ? "Compartilhada" : "Privada"}</dd></div>
+      <div><dt>Granularidade</dt><dd>{view.granularity}</dd></div>
+      <div><dt>Métricas</dt><dd>{view.metricsJson.length ? view.metricsJson.map(metricLabel).join(", ") : "Nenhuma selecionada"}</dd></div>
+      <div><dt>Filtros</dt><dd>{filters.length ? filters.map(([key, value]) => `${key}: ${String(value)}`).join(" · ") : "Sem filtros"}</dd></div>
+    </dl>
+  </div>;
 }

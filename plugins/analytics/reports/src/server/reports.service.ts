@@ -45,6 +45,14 @@ import {
 
 const DAY_MS = 86_400_000;
 
+export interface ReportExportView {
+  name: string;
+  ownerName: string;
+  shared: boolean;
+  metrics: string[];
+  granularity: string;
+}
+
 function invalid(error: unknown): BadRequestException {
   return new BadRequestException(
     error instanceof Error ? error.message : "Parametros invalidos.",
@@ -80,7 +88,8 @@ export class ReportsService {
     const routeStatus = Object.values(RouteStatus).includes(query.status as RouteStatus) ? query.status as RouteStatus : undefined;
     const transmissionStatus = Object.values(TransmissionStatus).includes(query.status as TransmissionStatus) ? query.status as TransmissionStatus : undefined;
     const taskStatus = Object.values(TaskStatus).includes(query.status as TaskStatus) ? query.status as TaskStatus : undefined;
-    return { period, incidentStatus, assetStatus, routeStatus, transmissionStatus, taskStatus };
+    const incidentSeverity = Object.values(IncidentSeverity).includes(query.severity as IncidentSeverity) ? query.severity as IncidentSeverity : undefined;
+    return { period, incidentStatus, incidentSeverity, assetStatus, routeStatus, transmissionStatus, taskStatus };
   }
 
   private readonly openIncidentStatuses = new Set<IncidentStatus>([IncidentStatus.NEW, IncidentStatus.TRIAGED, IncidentStatus.ASSIGNED, IncidentStatus.IN_PROGRESS]);
@@ -116,11 +125,11 @@ export class ReportsService {
   }
 
   async operations(query: ReportQueryDto) {
-    const { period, incidentStatus, assetStatus, routeStatus, transmissionStatus, taskStatus } = this.filters(query);
+    const { period, incidentStatus, incidentSeverity, assetStatus, routeStatus, transmissionStatus, taskStatus } = this.filters(query);
     const { zones, places } = await this.geography(query);
     const scope = { electionId: query.electionId, electoralZoneId: query.zoneId, pollingPlaceId: query.pollingPlaceId };
     const [incidents, transmissions, teams, tasks, assets, routes, allocations] = await Promise.all([
-      this.prisma.incident.findMany({ where: { ...scope, ...this.simulationFilter(query), categoryId: query.categoryId, status: incidentStatus, openedAt: period }, select: { id: true, electoralZoneId: true, pollingPlaceId: true, status: true, severity: true } }),
+      this.prisma.incident.findMany({ where: { ...scope, ...this.simulationFilter(query), categoryId: query.categoryId, status: incidentStatus, severity: incidentSeverity, openedAt: period }, select: { id: true, electoralZoneId: true, pollingPlaceId: true, status: true, severity: true } }),
       this.prisma.transmissionPoint.findMany({ where: { ...scope, status: transmissionStatus, lastActivity: period }, select: { id: true, electoralZoneId: true, pollingPlaceId: true, status: true } }),
       this.prisma.fieldTeam.findMany({ where: { electionId: query.electionId, status: "ACTIVE" }, select: { id: true } }),
       this.prisma.task.findMany({ where: { ...scope, status: taskStatus, createdAt: period }, select: { id: true, electoralZoneId: true, pollingPlaceId: true, status: true, dueAt: true } }),
@@ -157,7 +166,7 @@ export class ReportsService {
     const byPlace = places.map((place) => ({ id: place.id, label: place.name, zoneId: place.electoralZoneId, incidents: incidents.filter((item) => item.pollingPlaceId === place.id).length, openIncidents: incidents.filter((item) => item.pollingPlaceId === place.id && this.openIncidentStatuses.has(item.status)).length, transmissionPoints: transmissions.filter((item) => item.pollingPlaceId === place.id).length, assets: assets.filter((item) => item.pollingPlaceId === place.id).length }));
     const comparison = await this.compare(query, { incidents: incidents.length, tasks: tasks.length, routes: routes.length }, async (window) => {
       const [previousIncidents, previousTasks, previousRoutes] = await Promise.all([
-        this.prisma.incident.count({ where: { ...scope, ...this.simulationFilter(query), categoryId: query.categoryId, status: incidentStatus, openedAt: window } }),
+        this.prisma.incident.count({ where: { ...scope, ...this.simulationFilter(query), categoryId: query.categoryId, status: incidentStatus, severity: incidentSeverity, openedAt: window } }),
         this.prisma.task.count({ where: { ...scope, status: taskStatus, createdAt: window } }),
         this.prisma.distributionRoute.count({ where: { electionId: query.electionId, electoralZoneId: query.zoneId, status: routeStatus, plannedDeparture: window } }),
       ]);
@@ -167,9 +176,9 @@ export class ReportsService {
   }
 
   async executive(query: ReportQueryDto) {
-    const { period, incidentStatus, assetStatus, routeStatus, transmissionStatus } = this.filters(query);
+    const { period, incidentStatus, incidentSeverity, assetStatus, routeStatus, transmissionStatus } = this.filters(query);
     const placeWhere = { id: query.pollingPlaceId, electoralZoneId: query.zoneId, electoralZone: { electionId: query.electionId } };
-    const incidentWhere = { electionId: query.electionId, electoralZoneId: query.zoneId, pollingPlaceId: query.pollingPlaceId, ...this.simulationFilter(query), categoryId: query.categoryId, status: incidentStatus, openedAt: period };
+    const incidentWhere = { electionId: query.electionId, electoralZoneId: query.zoneId, pollingPlaceId: query.pollingPlaceId, ...this.simulationFilter(query), categoryId: query.categoryId, status: incidentStatus, severity: incidentSeverity, openedAt: period };
     const assetWhere = { electoralZoneId: query.zoneId, pollingPlaceId: query.pollingPlaceId, status: assetStatus, electoralZone: query.electionId ? { electionId: query.electionId } : undefined };
     const routeWhere = { electionId: query.electionId, electoralZoneId: query.zoneId, status: routeStatus, plannedDeparture: period };
     const transmissionWhere = { electionId: query.electionId, electoralZoneId: query.zoneId, pollingPlaceId: query.pollingPlaceId, status: transmissionStatus, createdAt: period };
@@ -594,33 +603,80 @@ export class ReportsService {
     };
   }
 
-  async csv(query: ReportQueryDto) {
+  async csv(query: ReportQueryDto, view?: ReportExportView) {
     const report = await this.executive(query);
+    const series = await this.exportSeries(query, view);
     const rows = [
+      ...(view ? [
+        ["Visão salva", view.name],
+        ["Dono", view.ownerName],
+        ["Compartilhada", view.shared ? "Sim" : "Não"],
+        ["Granularidade", view.granularity],
+        ["Métricas", view.metrics.join("; ")],
+        [],
+      ] : []),
       ["Indicador", "Valor"],
       ["Locais operacionais", report.executive.operationalPlaces], ["Locais críticos", report.executive.criticalPlaces], ["Incidentes abertos", report.executive.openIncidents],
       ["SLA (%)", report.executive.slaPercentage], ["Ativos disponíveis", report.executive.availableAssets], ["Ativos indisponíveis", report.executive.unavailableAssets],
       ["Transmissão (%)", report.executive.transmissionPercentage], ["Rotas em execução", report.executive.routesInProgress], ["Entregas atrasadas", report.executive.delayedDeliveries],
       [], ["Zona", "Locais", "Críticos", "Incidentes abertos", "Ativos", "Transmissão (%)"],
       ...report.byZone.map((zone) => [zone.label, zone.places, zone.criticalPlaces, zone.openIncidents, zone.assets, zone.transmissionPercentage]),
+      ...Object.entries(series).flatMap(([metric, buckets]) => [
+        [],
+        [`Série: ${metric}`, "Início", "Fim", "Valor", "Amostra"],
+        ...buckets.map((bucket) => [metric, bucket.bucketStart, bucket.bucketEnd, bucket.value, bucket.sampleSize]),
+      ]),
     ];
     return rows.map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(",")).join("\r\n");
   }
 
-  async pdf(query: ReportQueryDto) {
+  async pdf(query: ReportQueryDto, view?: ReportExportView) {
     const report = await this.executive(query);
+    const series = await this.exportSeries(query, view);
     return new Promise<Buffer>((resolve, reject) => {
-      const document = new PDFDocument({ margin: 48, size: "A4", info: { Title: "Election Ops — Relatório Executivo" } });
+      const title = view ? `Election Ops — ${view.name}` : "Election Ops — Relatório Executivo";
+      const document = new PDFDocument({ margin: 48, size: "A4", info: { Title: title } });
       const chunks: Buffer[] = []; document.on("data", (chunk: Buffer) => chunks.push(chunk)); document.on("end", () => resolve(Buffer.concat(chunks))); document.on("error", reject);
-      document.fontSize(20).fillColor("#17324d").text("Election Ops — Relatório Executivo");
+      document.fontSize(20).fillColor("#17324d").text(title);
       document.moveDown(0.4).fontSize(9).fillColor("#526b80").text(`Gerado em ${new Date(report.generatedAt).toLocaleString("pt-BR")}`);
+      if (view) {
+        document.text(`Visão salva por ${view.ownerName} · ${view.shared ? "compartilhada" : "privada"}`);
+        document.text(`Granularidade: ${view.granularity} · Métricas: ${view.metrics.join(", ") || "nenhuma selecionada"}`);
+      }
       document.moveDown().fontSize(13).fillColor("#17324d").text("Indicadores consolidados");
       const metrics: Array<[string, number | string]> = [["Locais operacionais", report.executive.operationalPlaces], ["Locais críticos", report.executive.criticalPlaces], ["Incidentes abertos", report.executive.openIncidents], ["SLA", `${report.executive.slaPercentage}%`], ["Ativos disponíveis", report.executive.availableAssets], ["Transmissão", `${report.executive.transmissionPercentage}%`], ["Rotas em execução", report.executive.routesInProgress], ["Entregas atrasadas", report.executive.delayedDeliveries]];
       for (const [label, value] of metrics) document.fontSize(10).fillColor("#273b4d").text(`${label}: ${value}`);
+      for (const [metric, buckets] of Object.entries(series)) {
+        const total = buckets.reduce((sum, bucket) => sum + bucket.value, 0);
+        const sampleSize = buckets.reduce((sum, bucket) => sum + bucket.sampleSize, 0);
+        document.moveDown().fontSize(12).fillColor("#17324d").text(`Série: ${metric}`);
+        document.fontSize(9).fillColor("#273b4d").text(`Buckets: ${buckets.length} · Valor total: ${total} · Amostra: ${sampleSize}`);
+      }
       document.moveDown().fontSize(13).fillColor("#17324d").text("Indicadores por zona");
       for (const zone of report.byZone) document.fontSize(9).fillColor("#273b4d").text(`${zone.label} — ${zone.places} locais, ${zone.openIncidents} incidentes abertos, ${zone.assets} ativos, ${zone.transmissionPercentage}% transmitido`);
       document.moveDown().fontSize(8).fillColor("#6b7f90").text("Fonte: dados persistidos na Election Ops Platform. Nenhum valor demonstrativo foi injetado neste relatório.");
       document.end();
     });
+  }
+
+  private async exportSeries(query: ReportQueryDto, view?: ReportExportView) {
+    const result: Record<string, Array<{ bucketStart: string; bucketEnd: string; value: number; sampleSize: number }>> = {};
+    if (!view?.metrics.length) return result;
+    if (!query.from || !query.to)
+      throw new BadRequestException("A visao precisa informar 'from' e 'to' para exportar series temporais.");
+    for (const metric of view.metrics) {
+      const series = await this.timeseries({
+        metric,
+        from: query.from,
+        to: query.to,
+        granularity: view.granularity,
+        electionId: query.electionId,
+        electoralZoneId: query.zoneId,
+        pollingPlaceId: query.pollingPlaceId,
+        includeSimulated: query.includeSimulated,
+      });
+      result[metric] = series.buckets;
+    }
+    return result;
   }
 }

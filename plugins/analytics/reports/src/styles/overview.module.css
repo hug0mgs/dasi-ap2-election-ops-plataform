@@ -51,5 +51,13 @@
 .viewCard p { margin: 0 0 4px; color: #a9b9c9; font-size: 13px; }
 .viewCardActions { display: flex; flex-wrap: wrap; gap: 6px; }
 .codeBlock { max-height: 340px; overflow: auto; margin: 0; padding: 12px; border-radius: 10px; background: #0b1626; border: 1px solid #1a2a41; color: #c7d6e6; font-size: 12px; }
+.viewSummary { padding: 14px; border: 1px solid #1a2a41; border-radius: 10px; background: #0b1626; }
+.viewSummary h3 { margin: 0 0 6px; }
+.viewSummary p { margin: 0 0 12px; color: #8fa2b6; }
+.viewSummary dl { margin: 0; display: grid; gap: 8px; }
+.viewSummary dl > div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; }
+.viewSummary dt { color: #7f91a7; font-size: 12px; }
+.viewSummary dd { margin: 0; color: #dbe7f3; overflow-wrap: anywhere; }
+.warning { margin: 0; padding: 10px 12px; border: 1px solid #7c5b18; border-radius: 8px; color: #fbbf24; background: #2a210f; font-size: 13px; }
 @media (max-width: 1050px) { .filters, .metrics, .indicatorGrid { grid-template-columns: repeat(2, 1fr); } .grid { grid-template-columns: 1fr; } .grid > :last-child { grid-column: auto; } }
 @media (max-width: 650px) { .header { flex-direction: column; } .filters, .metrics, .chartGrid, .indicatorGrid { grid-template-columns: 1fr; } .viewCard { flex-direction: column; } }

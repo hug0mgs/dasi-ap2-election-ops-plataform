@@ -74,6 +74,18 @@ export class ReportsViewsService {
     return items.map((item) => ({ ...item, editable: this.canEdit(item, actorId, permissions) }));
   }
 
+  /** Resolve uma visão para leitura/exportação, sem conceder acesso por reports.manage. */
+  async resolveForExport(id: string, actorId: string) {
+    const record = await this.prisma.reportSavedView.findUnique({
+      where: { id },
+      include: { owner: { select: { id: true, name: true } } },
+    });
+    if (!record) throw new NotFoundException("Visao nao encontrada.");
+    if (record.ownerId !== actorId && !record.shared)
+      throw new ForbiddenException("Voce nao pode exportar esta visao.");
+    return record;
+  }
+
   async create(dto: CreateReportViewDto, actorId: string, permissions: readonly string[]) {
     const total = await this.prisma.reportSavedView.count({ where: { ownerId: actorId } });
     if (total >= REPORT_MAX_VIEWS_PER_OWNER)
