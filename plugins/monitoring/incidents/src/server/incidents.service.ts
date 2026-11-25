@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { createHash } from "node:crypto";
 import {
   IncidentEventType,
   IncidentSeverity,
@@ -45,6 +46,8 @@ const includeRelations = {
   pollingPlace: { select: { id: true, name: true, city: true } },
   asset: { select: { id: true, assetTag: true, name: true, status: true, condition: true } },
 } satisfies Prisma.IncidentInclude;
+
+type IncludedIncident = Prisma.IncidentGetPayload<{ include: typeof includeRelations }>;
 
 function defaultSla(severity: IncidentSeverity) {
   const hours: Record<IncidentSeverity, number> = { LOW: 24, MEDIUM: 8, HIGH: 4, CRITICAL: 1 };
@@ -305,6 +308,45 @@ export class IncidentsService {
       return enrich(incident);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        throw new ConflictException("Não foi possível gerar um código único para o incidente. Tente novamente.");
+      }
+      throw error;
+    }
+  }
+
+  async createOffline(operationId: string, dto: CreateIncidentDto, actorId: string): Promise<IncludedIncident & ReturnType<typeof calculateIncidentSla> & { slaOverdue: boolean }> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(operationId))
+      throw new BadRequestException("Identificador da operação offline inválido.");
+    const existing = await this.prisma.incident.findUnique({ where: { id: operationId }, include: includeRelations });
+    if (existing) {
+      const original = await this.prisma.incidentEvent.findFirst({ where: { incidentId: operationId, type: IncidentEventType.INCIDENT_CREATED }, select: { metadata: true } });
+      const signature = createHash("sha256").update(JSON.stringify(dto)).digest("hex");
+      const receipt = original?.metadata as { offlinePayloadHash?: string } | null;
+      if (existing.createdById !== actorId || receipt?.offlinePayloadHash !== signature)
+        throw new ConflictException("Esta operação offline já pertence a outro registro.");
+      return enrich(existing);
+    }
+    await this.validateRelations(dto);
+    const sequence = (await this.prisma.incident.count()) + 1;
+    try {
+      const incident = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.incident.create({
+          data: { ...dto, id: operationId, code: `INC-${String(sequence).padStart(5, "0")}`, createdById: actorId,
+            slaDeadline: dto.slaDeadline ? new Date(dto.slaDeadline) : defaultSla(dto.severity) },
+          include: includeRelations,
+        });
+        await tx.incidentEvent.create({ data: { incidentId: created.id, type: IncidentEventType.INCIDENT_CREATED,
+          message: "Incidente criado.", actorId, metadata: { offlinePayloadHash: createHash("sha256").update(JSON.stringify(dto)).digest("hex") } } });
+        return created;
+      });
+      await this.eventBus?.emit("incident.created", { entityId: incident.id, actorId, code: incident.code,
+        title: incident.title, severity: incident.severity, electionId: incident.electionId,
+        pollingPlaceId: incident.pollingPlaceId ?? undefined });
+      return enrich(incident);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        const replay = await this.prisma.incident.findUnique({ where: { id: operationId }, include: includeRelations });
+        if (replay) return this.createOffline(operationId, dto, actorId);
         throw new ConflictException("Não foi possível gerar um código único para o incidente. Tente novamente.");
       }
       throw error;

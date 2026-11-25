@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { currentOfflineOwner, queueOffline } from "@eops/api-client/offline";
 import { Button, ErrorState, Field, Input, Loading, Select } from "@eops/ui";
 import { INCIDENT_SEVERITIES, INCIDENT_SEVERITY_LABELS, type IncidentCategorySummary, type IncidentSeverity } from "@eops/shared/incidents";
 import { type AssetSummary } from "@eops/shared/inventory";
@@ -34,7 +35,14 @@ export function IncidentFormPage() {
   const visiblePlaces = useMemo(() => places.filter((place) => !form.electoralZoneId || place.electoralZoneId === form.electoralZoneId), [places, form.electoralZoneId]);
   const set = (key: keyof FormState, value: string) => setForm((current) => ({ ...current, [key]: value }));
   async function submit(event: FormEvent) { event.preventDefault(); setSaving(true); setError(undefined); try {
-    const payload = { ...form, electoralZoneId: form.electoralZoneId || undefined, pollingPlaceId: form.pollingPlaceId || undefined, slaDeadline: form.slaDeadline ? new Date(form.slaDeadline).toISOString() : undefined };
+    const payload = { ...form, electoralZoneId: form.electoralZoneId || undefined, pollingPlaceId: form.pollingPlaceId || undefined, assetId: form.assetId || undefined, slaDeadline: form.slaDeadline ? new Date(form.slaDeadline).toISOString() : undefined };
+    if (!id && !navigator.onLine) {
+      const owner = currentOfflineOwner();
+      if (!owner || !elections.length || !categories.length) throw new Error("Carregue as referências e autentique-se antes de registrar sem conexão.");
+      queueOffline(owner, { kind: "incident", body: payload });
+      navigate("/incidents");
+      return;
+    }
     const saved = id ? await incidentService.update(id, payload) : await incidentService.create(payload);
     navigate(`/incidents/${saved.id}`);
   } catch (cause) { setError(cause); } finally { setSaving(false); } }
@@ -51,6 +59,6 @@ export function IncidentFormPage() {
         {!id && <><Field label="Pleito"><Select required value={form.electionId} onChange={(event) => setForm((current) => ({ ...current, electionId: event.target.value, electoralZoneId: "", pollingPlaceId: "" }))}><option value="">Selecione</option>{elections.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select></Field>
         <Field label="Zona"><Select value={form.electoralZoneId} onChange={(event) => setForm((current) => ({ ...current, electoralZoneId: event.target.value, pollingPlaceId: "" }))}><option value="">Nenhuma</option>{visibleZones.map((item) => <option key={item.id} value={item.id}>Zona {item.number} — {item.municipality}</option>)}</Select></Field>
         <Field label="Local"><Select value={form.pollingPlaceId} onChange={(event) => set("pollingPlaceId", event.target.value)}><option value="">Nenhum</option>{visiblePlaces.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select></Field></>}
-      </div><Button disabled={saving} type="submit">{saving ? "Salvando…" : "Salvar incidente"}</Button>
+      </div><Button disabled={saving} type="submit">{saving ? "Salvando…" : !id && !navigator.onLine ? "Guardar na fila local" : "Salvar incidente"}</Button>
     </form></section>;
 }

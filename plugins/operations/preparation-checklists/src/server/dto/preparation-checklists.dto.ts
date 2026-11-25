@@ -73,6 +73,8 @@ export class UpdateChecklistDueDateDto {
 }
 
 export class UpdateChecklistItemDto {
+    @IsEnum(PreparationChecklistItemStatus) @IsOptional() expectedStatus?: PreparationChecklistItemStatus;
+    @IsDateString() @IsOptional() expectedUpdatedAt?: string;
   @IsEnum(PreparationChecklistItemStatus) @IsOptional() status?: PreparationChecklistItemStatus;
   @IsString() @IsOptional() assigneeId?: string;
   @IsString() @MaxLength(2000) @IsOptional() observation?: string;

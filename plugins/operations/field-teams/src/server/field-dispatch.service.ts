@@ -323,6 +323,10 @@ export class FieldDispatchService {
       where: { id },
     });
     if (!current) throw new NotFoundException("Dispatch não encontrado.");
+    if (dto.expectedStatus !== undefined && current.status !== dto.expectedStatus)
+      throw new ConflictException("O despacho mudou desde a captura. Atualize a página antes de continuar.");
+    if (dto.expectedUpdatedAt && current.updatedAt.toISOString() !== dto.expectedUpdatedAt)
+      throw new ConflictException("O despacho foi alterado desde a captura.");
     const transitionError = dispatchTransitionError(current.status, dto.status);
     if (transitionError) throw new BadRequestException(transitionError);
     const requiredError = dispatchRequiredFieldError(dto);
@@ -345,6 +349,10 @@ export class FieldDispatchService {
     const summary = dto.summary?.trim();
     const memberChanged = memberId !== current.memberId;
     const updated = await this.prisma.$transaction(async (tx) => {
+      if (dto.expectedStatus !== undefined || dto.expectedUpdatedAt !== undefined) {
+        const claimed = await tx.fieldDispatch.updateMany({ where: { id, status: dto.expectedStatus, updatedAt: dto.expectedUpdatedAt ? new Date(dto.expectedUpdatedAt) : undefined }, data: { status: dto.status } });
+        if (claimed.count !== 1) throw new ConflictException("O despacho mudou desde a captura.");
+      }
       const saved = await tx.fieldDispatch.update({
         where: { id },
         data: {

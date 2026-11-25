@@ -259,12 +259,20 @@ export class PreparationChecklistsService {
   async updateItem(itemId: string, dto: UpdateChecklistItemDto, actorId: string) {
     const item = await this.prisma.preparationChecklistItem.findUnique({ where: { id: itemId }, include: { evidences: true, checklist: { include: { items: { include: { evidences: true } } } } } });
     if (!item) throw new NotFoundException("Item do checklist não encontrado.");
+    if (dto.expectedStatus !== undefined && dto.expectedStatus !== item.status)
+      throw new ConflictException("O item mudou desde a captura. Atualize o checklist.");
+    if (dto.expectedUpdatedAt && item.updatedAt.toISOString() !== dto.expectedUpdatedAt)
+      throw new ConflictException("O item foi alterado desde a captura.");
     if (item.checklist.status === PreparationChecklistStatus.APPROVED) throw new BadRequestException("Revogue a aprovação antes de alterar itens.");
     if (dto.assigneeId) await this.requireActiveUser(dto.assigneeId);
     const nextStatus = dto.status ?? item.status;
     if (nextStatus === PreparationChecklistItemStatus.COMPLETED && item.evidenceRequired && item.evidences.length === 0) throw new BadRequestException("Este item exige evidência para ser concluído.");
     const previousStatus = item.status;
     const result = await this.prisma.$transaction(async (tx) => {
+      if (dto.expectedStatus !== undefined || dto.expectedUpdatedAt !== undefined) {
+        const claimed = await tx.preparationChecklistItem.updateMany({ where: { id: itemId, status: dto.expectedStatus, updatedAt: dto.expectedUpdatedAt ? new Date(dto.expectedUpdatedAt) : undefined }, data: { status: dto.status } });
+        if (claimed.count !== 1) throw new ConflictException("O item mudou desde a captura.");
+      }
       await tx.preparationChecklistItem.update({
         where: { id: itemId },
         data: {

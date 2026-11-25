@@ -12,6 +12,7 @@ import {
 import { FIELD_DISPATCH_TRANSITIONS } from "@eops/shared/workforce";
 import type { FieldDispatchStatus } from "@eops/shared/workforce";
 import { useState, type FormEvent } from "react";
+import { currentOfflineOwner, queueOffline } from "@eops/api-client/offline";
 import { Link, useParams } from "react-router-dom";
 import { FieldNav } from "../components/FieldNav";
 import { fieldTeamsService } from "../services/fieldTeamsService";
@@ -49,6 +50,17 @@ export function DispatchDetailPage() {
     if (!status) return;
     setError(undefined);
     try {
+      if (!navigator.onLine) {
+        const owner = currentOfflineOwner();
+        if (!owner || !current?.updatedAt) throw new Error("É necessário ter carregado o despacho e estar autenticado para operar sem conexão.");
+        queueOffline(owner, { kind: "dispatch", resourceId: id, body: {
+          status, expectedStatus: current.status, expectedUpdatedAt: current.updatedAt,
+          reason: reason || undefined, summary: summary || undefined,
+          memberId: status === "DISPATCHED" ? memberId || undefined : undefined, notes: notes || undefined,
+        } });
+        setStatus("");
+        return;
+      }
       await fieldTeamsService.updateDispatchStatus(id, {
         status: status as FieldDispatchStatus,
         reason: reason || undefined,

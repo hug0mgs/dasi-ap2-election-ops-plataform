@@ -69,6 +69,12 @@ export class IncidentsController {
     return this.service.create(dto, request.user.id);
   }
 
+  @Permissions(PERMISSIONS.incidents.create)
+  @Post("offline/:operationId")
+  createOffline(@Param("operationId") operationId: string, @Body() dto: CreateIncidentDto, @Req() request: AuthenticatedRequest) {
+    return this.service.createOffline(operationId, dto, request.user.id);
+  }
+
   @Permissions(PERMISSIONS.incidents.update)
   @Patch(":id")
   update(@Param("id") id: string, @Body() dto: UpdateIncidentDto, @Req() request: AuthenticatedRequest) { return this.service.update(id, dto, request.user.id); }

@@ -156,6 +156,7 @@ export interface DispatchTimelineEntry {
 }
 export interface FieldDispatchDetail {
   id: string;
+  updatedAt: string;
   title: string;
   notes: string | null;
   status: DispatchStatus;

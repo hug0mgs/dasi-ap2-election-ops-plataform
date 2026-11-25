@@ -26,6 +26,18 @@ function transactionMock(tx: Record<string, unknown>) {
 }
 
 describe("PreparationChecklistsService", () => {
+  it("não altera item quando a versão capturada é obsoleta", async () => {
+    const prisma = { preparationChecklistItem: { findUnique: vi.fn().mockResolvedValue({
+      id: "item-1", status: PreparationChecklistItemStatus.PENDING,
+      updatedAt: new Date("2026-11-17T10:00:01Z"),
+    }) }, $transaction: vi.fn() };
+    await expect(createService(prisma).service.updateItem("item-1", {
+      status: PreparationChecklistItemStatus.COMPLETED,
+      expectedStatus: PreparationChecklistItemStatus.PENDING,
+      expectedUpdatedAt: "2026-11-17T10:00:00.000Z",
+    }, "actor-1")).rejects.toThrow("O item foi alterado desde a captura.");
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
   it("calcula o progresso sobre todos os itens", () => {
     expect(calculateChecklistProgress([
       { status: PreparationChecklistItemStatus.COMPLETED },

@@ -44,6 +44,7 @@ import { Loading } from "@eops/ui";
 import { NotificationBell } from "@eops/plugin-notifications";
 import { plugins } from "./pluginRegistry";
 import { HomeDashboard } from "./components/HomeDashboard";
+import { OfflineQueue } from "./components/OfflineQueue";
 import "./styles/global.css";
 
 const navigationIcons: Record<PluginNavigationIcon, LucideIcon> = {
@@ -290,6 +291,7 @@ export default function App() {
         </footer>
       </aside>
       <main className="workspace">
+        <OfflineQueue userId={user.id} />
         <header className="topbar">
           <div className="topbar-context">
             <button

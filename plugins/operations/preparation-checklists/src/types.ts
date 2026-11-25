@@ -12,6 +12,7 @@ export interface TemplateItem { id: string; title: string; description: string |
 export interface ChecklistTemplate { id: string; name: string; description: string | null; active: boolean; version: number; items: TemplateItem[]; }
 export interface Evidence { id: string; description: string; url: string; createdAt: string; recordedBy: { id: string; name: string }; }
 export interface ChecklistItem extends TemplateItem {
+  updatedAt: string;
   status: ChecklistItemStatus;
   assigneeId: string | null;
   assignee: PersonReference | null;

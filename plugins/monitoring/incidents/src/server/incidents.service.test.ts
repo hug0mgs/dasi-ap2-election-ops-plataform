@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException } from "@nestjs/common";
+import { createHash } from "node:crypto";
 import { IncidentSeverity, IncidentStatus } from "@prisma/client";
 import { describe, expect, it, vi } from "vitest";
 import type { PrismaService } from "@eops/database";
@@ -21,6 +22,27 @@ function incident(overrides: Record<string, unknown> = {}) {
 }
 
 describe("IncidentsService", () => {
+  it("reconhece reenvio offline do mesmo usuário sem criar outro incidente", async () => {
+    const id = "11111111-1111-4111-8111-111111111111";
+    const saved = incident({ id, createdById: "actor-1" });
+    const signature = createHash("sha256").update(JSON.stringify({ title: saved.title, description: saved.description, severity: saved.severity, electionId: saved.electionId, categoryId: saved.categoryId })).digest("hex");
+    const prisma = { incident: { findUnique: vi.fn().mockResolvedValue(saved), count: vi.fn() }, incidentEvent: { findFirst: vi.fn().mockResolvedValue({ metadata: { offlinePayloadHash: signature } }) } } as unknown as PrismaService;
+    const result = await new IncidentsService(prisma).createOffline(id, {
+      title: saved.title, description: saved.description, severity: saved.severity,
+      electionId: saved.electionId, categoryId: saved.categoryId,
+    }, "actor-1");
+    expect(result.id).toBe(id);
+    expect(prisma.incident.count).not.toHaveBeenCalled();
+  });
+
+  it("impede reenvio offline de outra identidade", async () => {
+    const id = "11111111-1111-4111-8111-111111111111";
+    const prisma = { incident: { findUnique: vi.fn().mockResolvedValue(incident({ id, createdById: "actor-1" })) }, incidentEvent: { findFirst: vi.fn().mockResolvedValue(null) } } as unknown as PrismaService;
+    await expect(new IncidentsService(prisma).createOffline(id, {
+      title: "Falha de rede", description: "Sem conectividade", severity: IncidentSeverity.HIGH,
+      electionId: "election-1", categoryId: "category-1",
+    }, "actor-2")).rejects.toBeInstanceOf(ConflictException);
+  });
   it("cria incidente, calcula SLA e registra o primeiro evento", async () => {
     const created = incident();
     const tx = { incident: { create: vi.fn().mockResolvedValue(created) }, incidentEvent: { create: vi.fn().mockResolvedValue({}) } };

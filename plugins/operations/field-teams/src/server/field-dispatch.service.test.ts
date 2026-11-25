@@ -81,6 +81,25 @@ describe("FieldDispatchService eligibility", () => {
 });
 
 describe("FieldDispatchService lifecycle", () => {
+  it("rejeita estado observado obsoleto antes de gravar eventos", async () => {
+    const prisma = { fieldDispatch: { findUnique: vi.fn().mockResolvedValue({
+      id: "dispatch-1", status: "ACCEPTED", updatedAt: new Date("2026-11-17T10:00:00Z"),
+    }) }, $transaction: vi.fn() };
+    await expect(serviceWith(prisma).transition("dispatch-1", {
+      status: "EN_ROUTE", expectedStatus: "DISPATCHED",
+    }, "actor-1")).rejects.toBeInstanceOf(ConflictException);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("rejeita versão observada obsoleta mesmo quando o estado é igual", async () => {
+    const prisma = { fieldDispatch: { findUnique: vi.fn().mockResolvedValue({
+      id: "dispatch-1", status: "ACCEPTED", updatedAt: new Date("2026-11-17T10:00:01Z"),
+    }) }, $transaction: vi.fn() };
+    await expect(serviceWith(prisma).transition("dispatch-1", {
+      status: "EN_ROUTE", expectedStatus: "ACCEPTED", expectedUpdatedAt: "2026-11-17T10:00:00.000Z",
+    }, "actor-1")).rejects.toBeInstanceOf(ConflictException);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
   it("rejeita transição fora da matriz sem tocar no banco", async () => {
     const update = vi.fn();
     const prisma = {

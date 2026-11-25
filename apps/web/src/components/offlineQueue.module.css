@@ -1,0 +1,13 @@
+.panel { padding: 16px; margin: 16px 24px; color: var(--text-primary, #e9eef7); border: 1px solid var(--border, #1a2a41); border-radius: 10px; background: var(--surface, #0d1a2b); }
+.panel header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.panel h2 { margin: 0; font-size: 16px; }
+.panel h2 span { color: #fbbf24; }
+.panel p { margin: 6px 0; font-size: 13px; color: #a9b9ca; }
+.panel button { cursor: pointer; padding: 7px 11px; border: 1px solid #30526d; border-radius: 6px; color: #e9eef7; background: #15324a; }
+.panel button:disabled { cursor: not-allowed; opacity: .55; }
+.list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; padding: 0; list-style: none; }
+.list li { display: flex; flex-direction: column; align-items: start; gap: 6px; padding: 10px; border: 1px solid #22364e; border-radius: 6px; }
+.list small { color: #a9b9ca; }
+.list a { color: #38bdf8; }
+.error { color: #fb4d5b !important; }
+@media (max-width: 640px) { .panel { margin: 10px; } .panel header { align-items: start; flex-direction: column; } }

@@ -138,6 +138,8 @@ export class CreateDispatchDto {
   @IsString() @MaxLength(1000) @IsOptional() capabilityOverrideReason?: string;
 }
 export class UpdateDispatchStatusDto {
+  @IsEnum(FieldDispatchStatus) @IsOptional() expectedStatus?: FieldDispatchStatus;
+  @IsDateString() @IsOptional() expectedUpdatedAt?: string;
   @IsEnum(FieldDispatchStatus) status!: FieldDispatchStatus;
   @IsString() @Length(3, 1000) @IsOptional() reason?: string;
   @IsString() @Length(3, 2000) @IsOptional() summary?: string;
