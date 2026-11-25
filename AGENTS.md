@@ -76,14 +76,15 @@ A SPEC normativa é [`SPEC/2026-11-17-agent-orchestration-and-delivery-standard.
 | Papel | Modelo de referência | Responsabilidades |
 | --- | --- | --- |
 | Orquestrador | `opencode/glm-5.3-flash-free` | ler SPEC e guides, decompor a tarefa, produzir o plano, despachar implementação, revisar, decidir go/no-go e autorizar commit |
-| Especificador e commitador | `opencode/deepseek-v4.1-flash-free` | criar/atualizar a SPEC conforme SDD, redigir commits em PT-BR, conferir trailers e rastreabilidade, rodar validações de entrega |
-| Implementador | `openai/gpt-6-astra` (variante `low`, a mais rápida) com a skill `caveman` | escrever código e testes, executar build/testes/lint dentro do escopo aprovado |
+| Especificador, commitador e testes | `opencode/deepseek-v4.1-flash-free` | criar/atualizar a SPEC conforme SDD, redigir commits em PT-BR, conferir trailers e rastreabilidade, **criar e manter os testes** (unitário, integração e E2E) e rodar as validações de entrega |
+| Implementador | `openai/gpt-6-astra` (variante `low`, a mais rápida) com a skill `caveman` | escrever o código de produto, executar build/testes/lint dentro do escopo aprovado |
 
 Regras:
 
 - registre o **modelo real** no trailer `Agent:` e no handoff; nunca declare um modelo que não executou a tarefa;
 - o orquestrador não implementa código, salvo tarefa trivial explicitamente registrada;
 - o implementador não altera SPEC, premissas, contrato público, RBAC ou escopo; divergência volta ao orquestrador;
+- **testes têm dono:** `opencode/deepseek-v4.1-flash-free` escreve e mantém as suítes (incluindo E2E); o implementador pode rodar e corrigir falha de teste, mas não redefinir o que a suíte cobre sem alinhamento com o orquestrador;
 - se a ferramenta não permitir fixar o modelo do subagente, registre a limitação no handoff em vez de supor conformidade;
 - o commitador executa `git add`/`git commit` locais do escopo solicitado sem pedir nova autorização, respeitando restrições explícitas do usuário e a política de `SPEC/README.md`.
 
@@ -96,10 +97,13 @@ O plano é operacional e descritivo: **não** substitui a SPEC normativa, **não
 ## Execução de código
 
 - O implementador usa `openai/gpt-6-astra` (variante `low`) com a skill `caveman` para respostas curtas e economia de contexto.
-- O estilo `caveman` vale **somente na conversa**: código, comentários, SPECs, documentação e mensagens de commit seguem PT-BR técnico e o padrão do repositório.
+- O implementador escreve **código de produto**. Os testes são escritos e mantidos pelo papel de testes (`opencode/deepseek-v4.1-flash-free`).
+- O estilo `caveman` vale **somente na conversa**: código, comentários, SPECs, testes, documentação e mensagens de commit seguem PT-BR técnico e o padrão do repositório.
 - Siga os padrões existentes (NestJS, React, Prisma, ESLint, tipagem estrita). Não introduza biblioteca, estrutura de pastas ou convenção nova sem aprovação.
 
 ## Cobertura de testes
+
+**Dono da suíte:** `opencode/deepseek-v4.1-flash-free` (papel Especificador, commitador e testes) cria e mantém os testes unitários, de integração e E2E. O implementador escreve o código de produto e pode corrigir uma falha de teste, mas não redefine a cobertura sem alinhamento com o orquestrador.
 
 Os testes ficam colocados junto ao código-fonte. O mapeamento normativo é:
 
@@ -179,7 +183,7 @@ feat(tooling): mede linhas novas com cloc desde a baseline
 
 Participação de agentes:
 - opencode/glm-5.3-flash-free — orquestração, plano e go/no-go
-- opencode/deepseek-v4.1-flash-free — SPEC, mensagem de commit e validação
+- opencode/deepseek-v4.1-flash-free — SPEC, testes, mensagem de commit e validação
 - openai/gpt-6-astra — implementação de código
 
 Agent: opencode/deepseek-v4.1-flash-free
