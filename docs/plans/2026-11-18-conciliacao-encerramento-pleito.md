@@ -124,4 +124,4 @@ Go apenas com correções funcionais validadas. Falhas comprovadamente externas 
 - Suíte do plugin: 80 testes aprovados. Typecheck, lint, boundaries, validação Prisma e build aprovados.
 - A suíte global permanece parcial por falha externa de decorators em `plugins/analytics/reports`; o arquivo de teste não pertence a esta tarefa.
 - Aplicação da migration em banco real, integração PostgreSQL e E2E continuam pendentes; não há evidência de execução.
-- O commit da implementação é local e isolado do trabalho preexistente de offline, BI e vistorias. Push e reescrita de histórico não foram executados.
+- O commit da implementação é local e isolado do trabalho preexistente de offline, BI e vistorias: `23fbe5c`. Push e reescrita de histórico não foram executados.

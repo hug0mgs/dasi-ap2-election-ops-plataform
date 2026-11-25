@@ -87,3 +87,4 @@ conteúdo entre parênteses **não** é reproduzido aqui.
 - Suíte global: 786 testes aprovados; uma suíte de reports falhou na transformação de decorators. Falha preservada e documentada fora do escopo.
 - LOC total medido: 94.061 linhas em 807 arquivos da árvore de trabalho; inclui alterações de outras tarefas. Não corresponde ao incremento exclusivo desta funcionalidade.
 - Integração com banco real, aplicação da migration e E2E permanecem pendentes. Handoff detalhado em `docs/execution-issues/2026-11-18-conciliacao-encerramento-pleito.md`.
+- Implementação commitada localmente em `23fbe5c`, com rastreabilidade `spec:check` aprovada no intervalo `edad0ac..HEAD`.

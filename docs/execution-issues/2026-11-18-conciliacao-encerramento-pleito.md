@@ -6,6 +6,7 @@
 - Sessão: `prompts/sessoes/2026-11-18-opencode-conciliacao-encerramento.md`
 - SPEC: `SPEC/2026-11-18-conciliacao-encerramento-pleito.md`
 - Orquestrador real: `openai/gpt-6-astra`
+- Commit de implementação: `23fbe5c`
 - Escopo: retomada da implementação parcial e atualização da política de commits solicitada pelo usuário.
 
 ## ISSUE-001 — Código parcial anterior ao commit da SPEC
@@ -93,7 +94,7 @@
 | Suíte do plugin | PASS; 80 testes em três arquivos, incluindo fluxo completo, mais de 1.000 origens por detector, exceções e concorrência simulada |
 | `npm test` | PARTIAL; 786 testes passaram, uma suíte reports falhou antes de executar testes |
 | `npm run build` | PASS; API e web; Vite informou bundle acima de 500 kB |
-| `npm run spec:check -- edad0ac..HEAD` | PASS até os quatro commits normativos/de guias; repetir após o commit de implementação |
+| `npm run spec:check -- edad0ac..HEAD` | PASS; cinco commits verificados, incluindo a implementação `23fbe5c` |
 | `npm run loc:total` | 94.061 linhas em 807 arquivos, toda a árvore de trabalho, incluindo tarefas preexistentes. Meta de 100.000 ainda pendente |
 | Migration aplicada / integração PostgreSQL / E2E | Não executados; pendência explícita |
 
