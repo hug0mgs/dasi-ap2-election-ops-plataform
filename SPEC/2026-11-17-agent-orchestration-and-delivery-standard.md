@@ -58,8 +58,8 @@ Cada sessão declara exatamente um papel e o **modelo real** em uso.
 | Papel | Modelo de referência | Responsabilidades |
 | --- | --- | --- |
 | Orquestrador | `opencode/glm-5.3-flash-free` | ler SPEC e guides, decompor a tarefa, produzir o plano de execução, despachar implementação, revisar resultado, decidir go/no-go, autorizar commit |
-| Especificador e commitador | `opencode/deepseek-v4.1-flash-free` | criar/atualizar a SPEC conforme SDD, redigir mensagens de commit em PT-BR, conferir trailers e rastreabilidade, executar validações de entrega |
-| Implementador | Codex com a skill `caveman` | escrever código e testes, executar build/testes/lint, corrigir defeitos dentro do escopo aprovado |
+| Especificador, commitador e testes | `opencode/deepseek-v4.1-flash-free` | criar/atualizar a SPEC conforme SDD, redigir mensagens de commit em PT-BR, conferir trailers e rastreabilidade, criar e manter testes unitários, de integração e E2E, executar validações de entrega |
+| Implementador | Codex com a skill `caveman` | escrever código de produto, executar build/testes/lint e corrigir defeitos dentro do escopo aprovado |
 
 Regras:
 
@@ -67,7 +67,8 @@ Regras:
 2. o orquestrador não implementa código diretamente, salvo tarefa explicitamente trivial e registrada;
 3. o implementador não altera SPEC, premissas, contrato público, RBAC ou escopo; divergência volta ao orquestrador;
 4. quando a ferramenta não permitir fixar o modelo de um subagente, registrar a limitação no handoff em vez de supor que o modelo foi respeitado;
-5. o papel de commitador executa commits locais do escopo solicitado conforme a autorização permanente descrita na política de commits; não é necessária confirmação do usuário a cada commit.
+5. o papel de commitador executa commits locais do escopo solicitado conforme a autorização permanente descrita na política de commits; não é necessária confirmação do usuário a cada commit;
+6. os testes têm dono: o papel Especificador, commitador e testes cria e mantém as suítes; o implementador pode rodar e corrigir falha de teste, mas não redefinir a cobertura sem alinhamento com o orquestrador.
 
 ## Plano de execução
 
@@ -126,7 +127,7 @@ Esta revisão substitui apenas a exigência anterior de autorização individual
 
 ## Cobertura de testes
 
-O repositório mantém testes colocados junto ao código-fonte. O mapeamento normativo é:
+O repositório mantém testes colocados junto ao código-fonte. O dono da suíte é o papel Especificador, commitador e testes; o implementador escreve código de produto e pode corrigir uma falha, mas não redefine a cobertura sem alinhamento com o orquestrador. O mapeamento normativo é:
 
 | Camada | Local real | Comando |
 | --- | --- | --- |
