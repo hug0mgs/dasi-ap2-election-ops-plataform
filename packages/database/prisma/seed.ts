@@ -856,6 +856,26 @@ async function main() {
     });
   }
 
+  await prisma.pollingPlaceInspectionTemplate.upsert({
+    where: { code_version: { code: "STANDARD_ACCESSIBILITY", version: 1 } },
+    update: { active: true },
+    create: {
+      code: "STANDARD_ACCESSIBILITY", name: "Vistoria padrão de acessibilidade e operação", inspectionType: "STANDARD", version: 1,
+      items: { create: [
+        ["ACCESS_ROUTE", "Rota acessível desde a via pública", "ACCESS", true, true],
+        ["ACCESS_CIRCULATION", "Portas, corredores e circulação acessíveis", "ACCESS", true, true],
+        ["ENERGY_SUPPLY", "Fornecimento e estabilidade de energia", "ENERGY", true, true],
+        ["ENERGY_CONTINGENCY", "Contingência elétrica disponível", "ENERGY", true, false],
+        ["CONNECTIVITY_PRIMARY", "Conectividade principal testada", "CONNECTIVITY", true, true],
+        ["CONNECTIVITY_BACKUP", "Alternativa de comunicação documentada", "CONNECTIVITY", true, false],
+        ["SIGNAGE_ACCESS", "Sinalização de entrada, saída e acessibilidade", "SIGNAGE", true, false],
+        ["SIGNAGE_EMERGENCY", "Rotas de emergência sinalizadas", "SIGNAGE", true, true],
+        ["INFRASTRUCTURE_ROOMS", "Salas, cobertura, iluminação e mobiliário adequados", "INFRASTRUCTURE", true, true],
+        ["INFRASTRUCTURE_SUPPORT", "Água, sanitários, limpeza e áreas de apoio", "INFRASTRUCTURE", true, false],
+      ].map(([code, title, dimension, required, critical], index) => ({ code: code as string, title: title as string, dimension: dimension as never, required: required as boolean, critical: critical as boolean, evidenceRequired: critical as boolean, sortOrder: index + 1 })) },
+    },
+  });
+
   const [zoneCount, placeCount, sectionCount] = await Promise.all([
     prisma.electoralZone.count(),
     prisma.pollingPlace.count(),

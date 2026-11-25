@@ -21,6 +21,7 @@ import { riskManagementPlugin } from "@eops/plugin-risk-management";
 import { shiftsPlugin } from "@eops/plugin-shifts";
 import { shiftHandoversPlugin } from "@eops/plugin-shift-handovers";
 import { preparationChecklistsPlugin } from "@eops/plugin-preparation-checklists";
+import { pollingPlaceInspectionsPlugin } from "@eops/plugin-polling-place-inspections";
 import { closureReconciliationPlugin } from "@eops/plugin-closure-reconciliation";
 import { tasksPlugin } from "@eops/plugin-tasks";
 import { commandCenterPlugin } from "@eops/plugin-command-center";
@@ -40,6 +41,7 @@ export const plugins: PlatformPlugin[] = [
   shiftsPlugin,
   shiftHandoversPlugin,
   preparationChecklistsPlugin,
+  pollingPlaceInspectionsPlugin,
   closureReconciliationPlugin,
   tasksPlugin,
   resourceRequestsPlugin,

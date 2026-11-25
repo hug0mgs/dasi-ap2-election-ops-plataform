@@ -75,6 +75,14 @@ export const PERMISSIONS = {
     manage: "preparation-checklists.manage",
     approve: "preparation-checklists.approve",
   },
+  pollingPlaceInspections: {
+    read: "polling-place-inspections.read",
+    create: "polling-place-inspections.create",
+    execute: "polling-place-inspections.execute",
+    manage: "polling-place-inspections.manage",
+    review: "polling-place-inspections.review",
+    acceptRisk: "polling-place-inspections.accept-risk",
+  },
   closureReconciliation: {
     read: "closure-reconciliation.read",
     create: "closure-reconciliation.create",
@@ -165,6 +173,13 @@ export const PLATFORM_PERMISSION_KEYS = [
   PERMISSIONS.preparationChecklists.read,
   PERMISSIONS.preparationChecklists.manage,
   PERMISSIONS.preparationChecklists.approve,
+
+  PERMISSIONS.pollingPlaceInspections.read,
+  PERMISSIONS.pollingPlaceInspections.create,
+  PERMISSIONS.pollingPlaceInspections.execute,
+  PERMISSIONS.pollingPlaceInspections.manage,
+  PERMISSIONS.pollingPlaceInspections.review,
+  PERMISSIONS.pollingPlaceInspections.acceptRisk,
 
   PERMISSIONS.closureReconciliation.read,
   PERMISSIONS.closureReconciliation.create,

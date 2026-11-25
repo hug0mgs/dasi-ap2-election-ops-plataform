@@ -1,3 +1,5 @@
+interface InspectionEventPayload { entityId: string; actorId?: string; inspectionId: string; electionId: string; pollingPlaceId: string; }
+
 interface ClosureEventPayload { entityId: string; actorId?: string; reconciliationId: string; electionId: string; }
 
 export interface DomainEventMap {
@@ -786,6 +788,18 @@ export interface DomainEventMap {
     title: string;
     level: string;
   };
+
+  "polling_place_inspection.created": InspectionEventPayload & { roundNumber: number };
+  "polling_place_inspection.scheduled": InspectionEventPayload & { plannedAt: string };
+  "polling_place_inspection.started": InspectionEventPayload;
+  "polling_place_inspection.submitted": InspectionEventPayload;
+  "polling_place_inspection.approved": InspectionEventPayload & { fitness: string };
+  "polling_place_inspection.changes_requested": InspectionEventPayload & { reason: string };
+  "polling_place_inspection.reopened": InspectionEventPayload & { reason: string };
+  "polling_place_inspection.cancelled": InspectionEventPayload & { reason: string };
+  "polling_place_inspection.blocking_finding_created": InspectionEventPayload & { findingId: string };
+  "polling_place_inspection.blocking_finding_resolved": InspectionEventPayload & { findingId: string };
+  "polling_place_inspection.fitness_changed": InspectionEventPayload & { from: string; to: string };
 
   "closure_reconciliation.created": ClosureEventPayload & { code: string };
   "closure_reconciliation.refreshed": ClosureEventPayload & { blockingItems: number; readinessScore: number };
@@ -1707,6 +1721,8 @@ export function requiredPermissionForEvent(
   if (name.startsWith("risk.")) return "risks.read";
   if (name.startsWith("preparation_checklist."))
     return "preparation-checklists.read";
+  if (name.startsWith("polling_place_inspection."))
+    return "polling-place-inspections.read";
   if (name.startsWith("closure_reconciliation."))
     return "closure-reconciliation.read";
   if (name.startsWith("simulated_incident.")) return "incidents.read";
