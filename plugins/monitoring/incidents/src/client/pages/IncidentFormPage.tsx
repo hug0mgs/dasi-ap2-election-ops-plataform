@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { ApiError } from "@eops/api-client";
 import { currentOfflineOwner, queueOffline } from "@eops/api-client/offline";
 import { Button, ErrorState, Field, Input, Loading, Select } from "@eops/ui";
 import { INCIDENT_SEVERITIES, INCIDENT_SEVERITY_LABELS, type IncidentCategorySummary, type IncidentSeverity } from "@eops/shared/incidents";
@@ -21,6 +22,7 @@ export function IncidentFormPage() {
   const [places, setPlaces] = useState<PollingPlaceSummary[]>([]);
   const [categories, setCategories] = useState<IncidentCategorySummary[]>([]);
   const [assets, setAssets] = useState<AssetSummary[]>([]);
+  const operation = useRef<{ id: string; signature: string } | undefined>(undefined);
   const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [error, setError] = useState<unknown>();
   useEffect(() => { void (async () => { try {
     const [reference, categoryData, incident] = await Promise.all([incidentService.referenceData(), incidentService.categories(), id ? incidentService.get(id) : Promise.resolve(null)]);
@@ -36,14 +38,27 @@ export function IncidentFormPage() {
   const set = (key: keyof FormState, value: string) => setForm((current) => ({ ...current, [key]: value }));
   async function submit(event: FormEvent) { event.preventDefault(); setSaving(true); setError(undefined); try {
     const payload = { ...form, electoralZoneId: form.electoralZoneId || undefined, pollingPlaceId: form.pollingPlaceId || undefined, assetId: form.assetId || undefined, slaDeadline: form.slaDeadline ? new Date(form.slaDeadline).toISOString() : undefined };
-    if (!id && !navigator.onLine) {
-      const owner = currentOfflineOwner();
+    const owner = currentOfflineOwner();
+    const signature = JSON.stringify({ owner, payload });
+    if (!id && operation.current?.signature !== signature) operation.current = { id: crypto.randomUUID(), signature };
+    const operationId = operation.current?.id;
+    const capture = () => {
       if (!owner || !elections.length || !categories.length) throw new Error("Carregue as referências e autentique-se antes de registrar sem conexão.");
-      queueOffline(owner, { kind: "incident", body: payload });
+      if (currentOfflineOwner() !== owner) throw new Error("A sessão mudou antes de guardar a operação local.");
+      queueOffline(owner, { kind: "incident", body: payload }, operationId);
       navigate("/incidents");
+    };
+    if (!id && !navigator.onLine) {
+      capture();
       return;
     }
-    const saved = id ? await incidentService.update(id, payload) : await incidentService.create(payload);
+    let saved;
+    try {
+      saved = id ? await incidentService.update(id, payload) : await incidentService.createOffline(operationId!, payload);
+    } catch (cause) {
+      if (!id && cause instanceof ApiError && (cause.status === 0 || cause.status >= 500)) { capture(); return; }
+      throw cause;
+    }
     navigate(`/incidents/${saved.id}`);
   } catch (cause) { setError(cause); } finally { setSaving(false); } }
   if (loading) return <Loading />;

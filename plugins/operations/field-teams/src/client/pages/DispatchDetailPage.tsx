@@ -10,9 +10,10 @@ import {
   useAsync,
 } from "@eops/ui";
 import { FIELD_DISPATCH_TRANSITIONS } from "@eops/shared/workforce";
+import { ApiError } from "@eops/api-client";
 import type { FieldDispatchStatus } from "@eops/shared/workforce";
-import { useState, type FormEvent } from "react";
-import { currentOfflineOwner, queueOffline } from "@eops/api-client/offline";
+import { useEffect, useState, type FormEvent } from "react";
+import { currentOfflineOwner, offlineEntries, observeOffline, queueOffline } from "@eops/api-client/offline";
 import { Link, useParams } from "react-router-dom";
 import { FieldNav } from "../components/FieldNav";
 import { fieldTeamsService } from "../services/fieldTeamsService";
@@ -38,6 +39,19 @@ export function DispatchDetailPage() {
   const [memberId, setMemberId] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<Error>();
+  const reload = dispatch.reload;
+  useEffect(() => {
+    const seen = new Set<string>();
+    const refresh = (initial = false) => {
+      try {
+        const entries = offlineEntries(currentOfflineOwner() ?? "").filter((entry) => entry.kind === "dispatch" && entry.resourceId === id && entry.state === "synced");
+        if (!initial && entries.some((entry) => !seen.has(entry.id))) reload();
+        entries.forEach((entry) => seen.add(entry.id));
+      } catch (cause) { setError(cause instanceof Error ? cause : new Error("Fila local indisponível.")); }
+    };
+    refresh(true);
+    return observeOffline(() => refresh());
+  }, [id, reload]);
   const members = useAsync(
     () => fieldTeamsService.members({ teamId: dispatch.data?.teamId }),
     [dispatch.data?.teamId],
@@ -49,25 +63,33 @@ export function DispatchDetailPage() {
     event.preventDefault();
     if (!status) return;
     setError(undefined);
+    const owner = currentOfflineOwner();
+    const body = {
+      status: status as FieldDispatchStatus,
+      reason: reason || undefined,
+      summary: summary || undefined,
+      memberId: status === "DISPATCHED" ? memberId || undefined : undefined,
+      notes: notes || undefined,
+    };
+    const capture = () => {
+      if (!owner || !current?.updatedAt) throw new Error("É necessário ter carregado o despacho e estar autenticado para operar sem conexão.");
+      if (currentOfflineOwner() !== owner) throw new Error("A sessão mudou antes de guardar a operação local.");
+      queueOffline(owner, { kind: "dispatch", resourceId: id, body: {
+        ...body, expectedStatus: current.status, expectedUpdatedAt: current.updatedAt,
+      } });
+      setStatus("");
+    };
     try {
       if (!navigator.onLine) {
-        const owner = currentOfflineOwner();
-        if (!owner || !current?.updatedAt) throw new Error("É necessário ter carregado o despacho e estar autenticado para operar sem conexão.");
-        queueOffline(owner, { kind: "dispatch", resourceId: id, body: {
-          status, expectedStatus: current.status, expectedUpdatedAt: current.updatedAt,
-          reason: reason || undefined, summary: summary || undefined,
-          memberId: status === "DISPATCHED" ? memberId || undefined : undefined, notes: notes || undefined,
-        } });
-        setStatus("");
+        capture();
         return;
       }
-      await fieldTeamsService.updateDispatchStatus(id, {
-        status: status as FieldDispatchStatus,
-        reason: reason || undefined,
-        summary: summary || undefined,
-        memberId: status === "DISPATCHED" ? memberId || undefined : undefined,
-        notes: notes || undefined,
-      });
+      try {
+        await fieldTeamsService.updateDispatchStatus(id, body);
+      } catch (cause) {
+        if (cause instanceof ApiError && (cause.status === 0 || cause.status >= 500)) { capture(); return; }
+        throw cause;
+      }
       setStatus("");
       setReason("");
       setSummary("");

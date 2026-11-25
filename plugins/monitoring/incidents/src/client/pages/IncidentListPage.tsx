@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { currentOfflineOwner, offlineEntries, observeOffline } from "@eops/api-client/offline";
 import { Card, EmptyState, ErrorState, LinkButton, Loading, Pagination, useAsync } from "@eops/ui";
 import { formatDateTime } from "@eops/shared/format";
 import { type IncidentCategorySummary } from "@eops/shared/incidents";
@@ -14,6 +15,20 @@ export function IncidentListPage() {
   const [categories, setCategories] = useState<IncidentCategorySummary[]>([]);
   const { data, error, loading, reload } = useAsync(() => incidentService.list(filters), [JSON.stringify(filters)]);
   const dashboard = useAsync(incidentService.dashboard, []);
+  const [offlineError, setOfflineError] = useState<Error>();
+  const reloadDashboard = dashboard.reload;
+  useEffect(() => {
+    const seen = new Set<string>();
+    const refresh = (initial = false) => {
+      try {
+        const entries = offlineEntries(currentOfflineOwner() ?? "").filter((entry) => entry.kind === "incident" && entry.state === "synced");
+        if (!initial && entries.some((entry) => !seen.has(entry.id))) { reload(); reloadDashboard(); }
+        entries.forEach((entry) => seen.add(entry.id));
+      } catch (cause) { setOfflineError(cause instanceof Error ? cause : new Error("Fila local indisponível.")); }
+    };
+    refresh(true);
+    return observeOffline(() => refresh());
+  }, [reload, reloadDashboard]);
   useEffect(() => { void incidentService.categories().then(setCategories); }, []);
   return (
     <section className={styles.page}>
@@ -30,7 +45,7 @@ export function IncidentListPage() {
       </div>}
       <IncidentFilters value={filters} categories={categories} onChange={setFilters} />
       {loading && <Loading label="Carregando incidentes…" />}
-      {error && <ErrorState error={error} onRetry={reload} />}
+      {(error || offlineError) && <ErrorState error={error ?? offlineError} onRetry={reload} />}
       {data?.items.length === 0 && <EmptyState title="Nenhum incidente encontrado" description="Ajuste os filtros ou registre um novo incidente." action={<LinkButton to="/incidents/new">Registrar incidente</LinkButton>} />}
       {data && data.items.length > 0 && <>
         <div className={styles.tableWrap}><table><thead><tr><th>Código</th><th>Incidente</th><th>Severidade</th><th>Status</th><th>Local</th><th>Responsável</th><th>Abertura</th><th>SLA</th></tr></thead>
