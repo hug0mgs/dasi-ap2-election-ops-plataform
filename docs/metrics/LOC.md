@@ -11,18 +11,18 @@ Relatório gerado por `npm run loc:total` (`scripts/count-loc-total.mjs`). Não 
 
 ## Total atual
 
-- Data: 2026-11-17T06:08:44.473Z
-- Commit: `8094cab` (working tree com alterações)
-- Total: **83692 linhas de código em 752 arquivos**
-- Variação desde o checkpoint inicial: +175
-- Variação desde o checkpoint anterior: +175
+- Data: 2026-11-25T00:50:59.701Z
+- Commit: `dfd532f` (working tree com alterações)
+- Total: **94061 linhas de código em 807 arquivos**
+- Variação desde o checkpoint inicial: +10544
+- Variação desde o checkpoint anterior: +0
 
 | Linguagem | Arquivos | Linhas de código |
 | --- | --- | --- |
-| TypeScript | 685 | 73574 |
-| CSS | 28 | 3680 |
-| Prisma Schema | 1 | 3054 |
-| SQL | 25 | 2218 |
+| TypeScript | 735 | 82709 |
+| CSS | 31 | 4213 |
+| Prisma Schema | 1 | 3458 |
+| SQL | 27 | 2515 |
 | JavaScript | 9 | 1101 |
 | PowerShell | 3 | 53 |
 | HTML | 1 | 12 |
@@ -33,6 +33,12 @@ Relatório gerado por `npm run loc:total` (`scripts/count-loc-total.mjs`). Não 
 | --- | --- | --- | --- | --- |
 | 2026-11-17 | `5aa147c` | 83517 | 751 | — |
 | 2026-11-17T06:08:44.473Z | `8094cab` | 83692 | 752 | +175 |
+| 2026-11-17T07:09:58.801Z | `d16ef38` | 83971 | 753 | +279 |
+| 2026-11-17T14:16:18.847Z | `edad0ac` | 84932 | 778 | +961 |
+| 2026-11-18T22:34:04.594Z | `edad0ac` | 93500 | 807 | +8568 |
+| 2026-11-18T22:48:10.119Z | `64cbd7c` | 94061 | 807 | +561 |
+| 2026-11-25T00:42:13.185Z | `324a66c` | 94061 | 807 | +0 |
+| 2026-11-25T00:50:59.701Z | `dfd532f` | 94061 | 807 | +0 |
 
 ## Como medir
 
