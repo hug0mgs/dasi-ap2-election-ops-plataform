@@ -630,6 +630,7 @@ enum EvidenceEventType {
 }
 
 model Election {
+  closureReconciliations  ClosureReconciliation[]
   id                     String                  @id @default(cuid())
   name                   String
   description            String?
@@ -674,6 +675,7 @@ model ElectionRound {
 }
 
 model ElectoralZone {
+  closureReconciliations  ClosureReconciliation[]
   id                     String                  @id @default(cuid())
   electionId             String
   number                 Int
@@ -3397,4 +3399,205 @@ model ReportSavedView {
   @@unique([ownerId, name])
   @@index([ownerId, isDefault])
   @@index([shared, updatedAt])
+}
+
+// ---------------------------------------------------------------------------
+// Conciliação de encerramento do pleito.
+// Ver SPEC/2026-11-18-conciliacao-encerramento-pleito.md.
+// ---------------------------------------------------------------------------
+
+enum ClosureReconciliationStatus {
+  DRAFT
+  COLLECTING
+  IN_REVIEW
+  PENDING_EXCEPTIONS
+  READY
+  CLOSED
+  CANCELLED
+}
+
+enum ClosureItemCategory {
+  ASSET_RETURN
+  DELIVERY
+  DISPATCH
+  EVIDENCE
+}
+
+enum ClosureItemStatus {
+  PENDING
+  EXCEPTION
+  RESOLVED
+  ACCEPTED
+  DISMISSED
+}
+
+enum ClosureSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ClosureExceptionStatus {
+  REGISTERED
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+enum ClosureExceptionRisk {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ClosureSignoffRole {
+  OPERATIONS_LEAD
+  LOGISTICS
+  FIELD
+  AUDIT
+}
+
+enum ClosureHistoryAction {
+  CREATED
+  UPDATED
+  REFRESHED
+  ITEM_RESOLVED
+  ITEM_DISMISSED
+  ITEM_REOPENED
+  EXCEPTION_REGISTERED
+  EXCEPTION_ACCEPTED
+  EXCEPTION_REVOKED
+  SIGNOFF_ADDED
+  SIGNOFF_REMOVED
+  SUBMITTED
+  APPROVED
+  REOPENED
+  CLOSED
+  CANCELLED
+}
+
+model ClosureReconciliation {
+  id                 String                      @id @default(cuid())
+  electionId         String
+  electoralZoneId    String?
+  code               String                      @unique
+  status             ClosureReconciliationStatus @default(DRAFT)
+  notes              String?                     @db.Text
+  closureReason      String?                     @db.Text
+  assetsUnreturned   Int                         @default(0)
+  deliveriesPending  Int                         @default(0)
+  dispatchesOpen     Int                         @default(0)
+  evidenceMissing    Int                         @default(0)
+  exceptionsOpen     Int                         @default(0)
+  exceptionsAccepted Int                         @default(0)
+  exceptionsExpired  Int                         @default(0)
+  blockingItems      Int                         @default(0)
+  readinessScore     Int                         @default(0)
+  lastRefreshedAt    DateTime?
+  submittedAt        DateTime?
+  approvedAt         DateTime?
+  closedAt           DateTime?
+  cancelledAt        DateTime?
+  createdById        String?
+  submittedById      String?
+  approvedById       String?
+  closedById         String?
+  createdAt          DateTime                    @default(now())
+  updatedAt          DateTime                    @updatedAt
+  election           Election                    @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  electoralZone      ElectoralZone?              @relation(fields: [electoralZoneId], references: [id], onDelete: SetNull)
+  items              ClosureReconciliationItem[]
+  exceptions         ClosureReconciliationException[]
+  signoffs           ClosureReconciliationSignoff[]
+  history            ClosureReconciliationHistory[]
+
+  @@index([electionId, status])
+  @@index([electoralZoneId, status])
+  @@index([status, updatedAt])
+}
+
+model ClosureReconciliationItem {
+  id               String                @id @default(cuid())
+  reconciliationId String
+  category         ClosureItemCategory
+  sourceType       String
+  sourceId         String
+  referenceLabel   String
+  title            String
+  detail           String?               @db.Text
+  severity         ClosureSeverity       @default(MEDIUM)
+  blocking         Boolean               @default(true)
+  status           ClosureItemStatus     @default(PENDING)
+  dueAt            DateTime?
+  detectedAt       DateTime              @default(now())
+  lastSeenAt       DateTime              @default(now())
+  resolvedAt       DateTime?
+  resolvedById     String?
+  resolutionNote   String?               @db.Text
+  payload          Json?
+  reconciliation   ClosureReconciliation @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+  exceptions       ClosureReconciliationException[]
+
+  @@unique([reconciliationId, category, sourceType, sourceId])
+  @@index([reconciliationId, status, blocking])
+  @@index([category, severity])
+  @@index([status, lastSeenAt])
+}
+
+model ClosureReconciliationException {
+  id               String                     @id @default(cuid())
+  reconciliationId String
+  itemId           String?
+  category         ClosureItemCategory
+  risk             ClosureExceptionRisk       @default(MEDIUM)
+  justification    String                     @db.Text
+  mitigation       String?                    @db.Text
+  status           ClosureExceptionStatus     @default(REGISTERED)
+  validUntil       DateTime?
+  registeredById   String
+  registeredByName String?
+  approvedById     String?
+  approvedAt       DateTime?
+  revokedAt        DateTime?
+  revokedById      String?
+  revokeReason     String?                    @db.Text
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+  reconciliation   ClosureReconciliation       @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+  item             ClosureReconciliationItem? @relation(fields: [itemId], references: [id], onDelete: SetNull)
+
+  @@index([reconciliationId, status])
+  @@index([status, validUntil])
+  @@index([itemId])
+}
+
+model ClosureReconciliationSignoff {
+  id               String                @id @default(cuid())
+  reconciliationId String
+  role             ClosureSignoffRole
+  userId           String
+  userNameSnapshot String
+  statement        String                @db.Text
+  signedAt         DateTime              @default(now())
+  reconciliation   ClosureReconciliation @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+
+  @@unique([reconciliationId, role, userId])
+  @@index([reconciliationId, role])
+}
+
+model ClosureReconciliationHistory {
+  id               String                      @id @default(cuid())
+  reconciliationId String
+  action           ClosureHistoryAction
+  actorId          String?
+  summary          String
+  fromStatus       ClosureReconciliationStatus?
+  toStatus         ClosureReconciliationStatus?
+  payload          Json?
+  createdAt        DateTime                    @default(now())
+  reconciliation   ClosureReconciliation       @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+
+  @@index([reconciliationId, createdAt])
+  @@index([action, createdAt])
 }

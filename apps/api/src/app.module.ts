@@ -16,6 +16,7 @@ import { KnowledgeRunbooksModule } from "@eops/plugin-knowledge-runbooks/server"
 import { PollingPlacesModule } from "@eops/plugin-polling-places/server";
 import { PollingSectionsModule } from "@eops/plugin-polling-sections/server";
 import { PreparationChecklistsModule } from "@eops/plugin-preparation-checklists/server";
+import { ClosureReconciliationModule } from "@eops/plugin-closure-reconciliation/server";
 import { RiskManagementModule } from "@eops/plugin-risk-management/server";
 import { ShiftsModule } from "@eops/plugin-shifts/server";
 import { ShiftHandoversModule } from "@eops/plugin-shift-handovers/server";
@@ -55,6 +56,7 @@ import { PostmortemsModule } from "@eops/plugin-postmortems/server";
     ShiftsModule,
     ShiftHandoversModule,
     PreparationChecklistsModule,
+    ClosureReconciliationModule,
     TasksModule,
     CommandCenterModule,
     ResourceRequestsModule,

@@ -1,3 +1,5 @@
+interface ClosureEventPayload { entityId: string; actorId?: string; reconciliationId: string; electionId: string; }
+
 export interface DomainEventMap {
   "incident.created": {
     entityId: string;
@@ -784,6 +786,14 @@ export interface DomainEventMap {
     title: string;
     level: string;
   };
+
+  "closure_reconciliation.created": ClosureEventPayload & { code: string };
+  "closure_reconciliation.refreshed": ClosureEventPayload & { blockingItems: number; readinessScore: number };
+  "closure_reconciliation.exception_registered": ClosureEventPayload & { exceptionId: string; category: string; risk: string };
+  "closure_reconciliation.submitted": ClosureEventPayload & { blockingItems: number; readinessScore: number };
+  "closure_reconciliation.approved": ClosureEventPayload & { readinessScore: number };
+  "closure_reconciliation.closed": ClosureEventPayload & { readinessScore: number; exceptionsAccepted: number };
+  "closure_reconciliation.reopened": ClosureEventPayload & { reason: string };
 
   "preparation_checklist.approved": {
     entityId: string;
@@ -1618,6 +1628,58 @@ export const NOTIFICATION_EVENT_CATALOG = [
     description: "Uma ação corretiva passou do prazo definido.",
     requiredPermission: "postmortems.read",
   },
+  {
+    eventName: "closure_reconciliation.created",
+    domain: "Encerramento",
+    label: "Conciliação aberta",
+    description: "Uma conciliação de encerramento de pleito foi criada.",
+    requiredPermission: "closure-reconciliation.read",
+  },
+  {
+    eventName: "closure_reconciliation.refreshed",
+    domain: "Encerramento",
+    label: "Conciliação atualizada",
+    description:
+      "A detecção atualizou as pendências de ativos, entregas, despachos e evidências.",
+    requiredPermission: "closure-reconciliation.read",
+  },
+  {
+    eventName: "closure_reconciliation.exception_registered",
+    domain: "Encerramento",
+    label: "Exceção registrada",
+    description:
+      "Uma pendência de encerramento recebeu exceção justificada pendente de aprovação.",
+    requiredPermission: "closure-reconciliation.read",
+  },
+  {
+    eventName: "closure_reconciliation.submitted",
+    domain: "Encerramento",
+    label: "Conciliação submetida",
+    description: "A conciliação foi submetida para revisão e encerramento.",
+    requiredPermission: "closure-reconciliation.read",
+  },
+  {
+    eventName: "closure_reconciliation.approved",
+    domain: "Encerramento",
+    label: "Conciliação aprovada",
+    description: "A conciliação foi aprovada por usuário distinto do autor.",
+    requiredPermission: "closure-reconciliation.read",
+  },
+  {
+    eventName: "closure_reconciliation.closed",
+    domain: "Encerramento",
+    label: "Encerramento concluído",
+    description:
+      "O encerramento operacional do pleito foi concluído com a conciliação fechada.",
+    requiredPermission: "closure-reconciliation.read",
+  },
+  {
+    eventName: "closure_reconciliation.reopened",
+    domain: "Encerramento",
+    label: "Conciliação reaberta",
+    description: "Uma conciliação encerrada voltou para tratamento.",
+    requiredPermission: "closure-reconciliation.read",
+  },
 ] as const satisfies readonly NotificationEventDefinition[];
 
 export function requiredPermissionForEvent(
@@ -1645,6 +1707,8 @@ export function requiredPermissionForEvent(
   if (name.startsWith("risk.")) return "risks.read";
   if (name.startsWith("preparation_checklist."))
     return "preparation-checklists.read";
+  if (name.startsWith("closure_reconciliation."))
+    return "closure-reconciliation.read";
   if (name.startsWith("simulated_incident.")) return "incidents.read";
   if (name.startsWith("report_view.")) return "reports.read";
   if (name.startsWith("resource_request.")) return "resource-requests.read";

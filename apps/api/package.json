@@ -14,6 +14,7 @@
     "@eops/event-bus": "0.1.0",
     "@eops/plugin-access-control": "0.1.0",
     "@eops/plugin-audit": "0.1.0",
+    "@eops/plugin-closure-reconciliation": "0.1.0",
     "@eops/plugin-communications": "0.1.0",
     "@eops/plugin-command-center": "0.1.0",
     "@eops/plugin-documents-evidence": "0.1.0",

@@ -75,6 +75,15 @@ export const PERMISSIONS = {
     manage: "preparation-checklists.manage",
     approve: "preparation-checklists.approve",
   },
+  closureReconciliation: {
+    read: "closure-reconciliation.read",
+    create: "closure-reconciliation.create",
+    refresh: "closure-reconciliation.refresh",
+    manage: "closure-reconciliation.manage",
+    exceptions: "closure-reconciliation.exceptions",
+    approve: "closure-reconciliation.approve",
+    close: "closure-reconciliation.close",
+  },
   tasks: {
     read: "tasks.read",
     manage: "tasks.manage",
@@ -156,6 +165,14 @@ export const PLATFORM_PERMISSION_KEYS = [
   PERMISSIONS.preparationChecklists.read,
   PERMISSIONS.preparationChecklists.manage,
   PERMISSIONS.preparationChecklists.approve,
+
+  PERMISSIONS.closureReconciliation.read,
+  PERMISSIONS.closureReconciliation.create,
+  PERMISSIONS.closureReconciliation.refresh,
+  PERMISSIONS.closureReconciliation.manage,
+  PERMISSIONS.closureReconciliation.exceptions,
+  PERMISSIONS.closureReconciliation.approve,
+  PERMISSIONS.closureReconciliation.close,
 
   PERMISSIONS.tasks.read,
   PERMISSIONS.tasks.manage,
