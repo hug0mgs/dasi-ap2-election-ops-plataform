@@ -33,17 +33,17 @@ O [relatório auxiliar de LOC](docs/metrics/LOC.md) registra o total de 94.290 l
 
 Preparação do ambiente e pendências verificadas: [docs/AMBIENTE-E-PENDENCIAS.md](docs/AMBIENTE-E-PENDENCIAS.md).
 
-Saída real em 2026-11-25, cloc 2.12, base `5aa147c297a0e68a8201b6fe2408175b2c78aa3c` → produto `50fe51972335babb5085e1f1a9530e670028165a`: **11.315 linhas adicionadas, 131 modificadas e 0 removidas**. A meta de 100.000 linhas no recorte permanece pendente. O handoff documental posterior só altera Markdown, excluído da medição.
+Saída real em 2026-11-27, cloc 2.12, base `5aa147c297a0e68a8201b6fe2408175b2c78aa3c` → produto `28136b4`: **11.743 linhas adicionadas, 131 modificadas e 0 removidas**. A meta de 100.000 linhas no recorte permanece pendente.
 
 ```text
-github.com/AlDanial/cloc v 2.12  T=33.07 s (24.4 files/s, 3152.3 lines/s)
+github.com/AlDanial/cloc v 2.12  T=36.95 s (21.9 files/s, 2833.8 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
 TypeScript
  same                          652           4911           2030          73531
  modified                       33              0              0             43
- added                          51            482             48           9906
+ added                          53            517             64          10334
  removed                         0              0              0              0
 CSS
  same                           27            366             48           3680
@@ -79,7 +79,7 @@ HTML
 SUM:
  same                          716           6020           2544          83386
  modified                       35              0              0            131
- added                          57            694            151          11315
+ added                          59            729            167          11743
  removed                         0              0              0              0
 -------------------------------------------------------------------------------
 ```
