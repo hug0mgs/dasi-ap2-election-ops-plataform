@@ -38,6 +38,7 @@ export const incidentService = {
   categories: () => apiClient.get<IncidentCategorySummary[]>("/incidents/categories"),
   get: (id: string) => apiClient.get<IncidentSummary>(`/incidents/${id}`),
   create: (input: IncidentInput) => apiClient.post<IncidentSummary, IncidentInput>("/incidents", input),
+  createOffline: (operationId: string, input: IncidentInput) => apiClient.post<IncidentSummary, IncidentInput>(`/incidents/offline/${operationId}`, input),
   update: (id: string, input: Partial<Pick<IncidentInput, "title" | "description" | "severity" | "categoryId" | "slaDeadline">>) =>
     apiClient.patch<IncidentSummary, typeof input>(`/incidents/${id}`, input),
   changeStatus: (id: string, status: IncidentStatus, comment?: string) =>

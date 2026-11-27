@@ -1,6 +1,7 @@
 import { Badge, Button, Card, ErrorState, Field, Input, Loading, Select, useAsync } from "@eops/ui";
-import { useState, type FormEvent } from "react";
-import { currentOfflineOwner, queueOffline } from "@eops/api-client/offline";
+import { ApiError } from "@eops/api-client";
+import { useEffect, useState, type FormEvent } from "react";
+import { currentOfflineOwner, offlineEntries, observeOffline, queueOffline } from "@eops/api-client/offline";
 import { Link, useParams } from "react-router-dom";
 import type { ChecklistItem, ChecklistItemStatus } from "../../types";
 import { PreparationNav } from "../components/PreparationNav";
@@ -13,15 +14,38 @@ export function ChecklistDetailPage() {
   const checklist = useAsync(() => preparationChecklistsService.checklist(id), [id]);
   const references = useAsync(preparationChecklistsService.references, []);
   const [error, setError] = useState<Error>();
+  const reload = checklist.reload;
+  useEffect(() => {
+    const seen = new Set<string>();
+    const refresh = (initial = false) => {
+      try {
+        const entries = offlineEntries(currentOfflineOwner() ?? "").filter((entry) => entry.kind === "checklist" && entry.state === "synced");
+        if (!initial && entries.some((entry) => !seen.has(entry.id))) reload();
+        entries.forEach((entry) => seen.add(entry.id));
+      } catch (cause) { setError(cause instanceof Error ? cause : new Error("Fila local indisponível.")); }
+    };
+    refresh(true);
+    return observeOffline(() => refresh());
+  }, [id, reload]);
   async function refresh() { const updated = await preparationChecklistsService.checklist(id); checklist.setData(updated); }
   async function runAction(action: () => Promise<unknown>) { setError(undefined); try { await action(); await refresh(); } catch (reason) { setError(reason instanceof Error ? reason : new Error("A operação não foi concluída.")); } }
-  function saveItemOffline(item: ChecklistItem, input: { status: ChecklistItemStatus; assigneeId?: string | null; observation?: string }) {
-    if (navigator.onLine) return runAction(() => preparationChecklistsService.updateItem(item.id, input));
-    try {
-      const owner = currentOfflineOwner();
+  async function saveItemOffline(item: ChecklistItem, input: { status: ChecklistItemStatus; assigneeId?: string | null; observation?: string }) {
+    const owner = currentOfflineOwner();
+    const capture = () => {
       if (!owner || !item.updatedAt) throw new Error("Carregue o checklist e autentique-se antes de operar sem conexão.");
+      if (currentOfflineOwner() !== owner) throw new Error("A sessão mudou antes de guardar a operação local.");
       queueOffline(owner, { kind: "checklist", resourceId: item.id, body: { ...input, expectedStatus: item.status, expectedUpdatedAt: item.updatedAt } });
+    };
+    try {
       setError(undefined);
+      if (!navigator.onLine) { capture(); return; }
+      try {
+        await preparationChecklistsService.updateItem(item.id, input);
+      } catch (cause) {
+        if (cause instanceof ApiError && (cause.status === 0 || cause.status >= 500)) { capture(); return; }
+        throw cause;
+      }
+      await refresh();
     } catch (reason) { setError(reason instanceof Error ? reason : new Error("Não foi possível guardar o item.")); }
   }
   return <section className={styles.page}><PreparationNav /><p className={styles.breadcrumb}><Link to="/preparation-checklists/list">Checklists</Link> / Detalhes</p>{checklist.loading && <Loading />}{(checklist.error || error) && <ErrorState error={error ?? checklist.error} onRetry={checklist.reload} />}{checklist.data && <><header className={styles.header}><div><span>{checklist.data.election.name} · ZONA {checklist.data.electoralZone.number}</span><h1>{checklist.data.pollingPlace.name}</h1><p>{checklist.data.pollingPlace.address} · Modelo: {checklist.data.template.name} · v{checklist.data.templateVersion}{checklist.data.template.version !== checklist.data.templateVersion ? ` (atual v${checklist.data.template.version})` : ""}</p></div><Badge tone={checklist.data.status === "APPROVED" ? "success" : checklist.data.status === "BLOCKED" ? "danger" : checklist.data.status === "READY_FOR_APPROVAL" ? "warning" : "neutral"}>{CHECKLIST_STATUS_LABELS[checklist.data.status]}</Badge></header><div className={styles.metrics}><Card><span>Prontidão</span><strong>{checklist.data.readiness}%</strong><div className={styles.progressTrack}><span style={{ width: `${checklist.data.readiness}%` }} /></div></Card><Card><span>Progresso</span><strong>{checklist.data.progress}%</strong><div className={styles.progressTrack}><span style={{ width: `${checklist.data.progress}%` }} /></div></Card><Card><span>Prazo</span><strong>{checklist.data.dueAt ? new Date(checklist.data.dueAt).toLocaleDateString("pt-BR") : "Sem prazo"}</strong><Badge tone={checklist.data.deadlineState === "OVERDUE" ? "danger" : checklist.data.deadlineState === "AT_RISK" ? "warning" : "success"}>{DEADLINE_STATE_LABELS[checklist.data.deadlineState]}</Badge></Card><Card><span>Bloqueadores críticos</span><strong>{checklist.data.criticalBlockers.length}</strong></Card><Card><span>Obrigatórios pendentes</span><strong>{checklist.data.totals.requiredPending}</strong></Card></div>{checklist.data.criticalBlockers.length > 0 && <Card><header className={styles.sectionHeader}><h2>Bloqueadores críticos</h2><Badge tone="danger">{checklist.data.criticalBlockers.length}</Badge></header><ul className={styles.blockerList}>{checklist.data.criticalBlockers.map((blocker) => <li key={blocker.itemId}><strong>{blocker.title}</strong><span>{blocker.reasons.map((reason) => <Badge key={reason} tone="danger">{CRITICAL_BLOCKER_LABELS[reason]}</Badge>)}</span></li>)}</ul></Card>}<Card><div className={styles.ownerRow}><div><h2>Responsável pelo checklist</h2><p>{checklist.data.assignee?.name ?? "Nenhum responsável atribuído"}</p></div>{checklist.data.status !== "APPROVED" && references.data && <Select aria-label="Responsável pelo checklist" value={checklist.data.assignee?.id ?? ""} onChange={(event) => void runAction(() => preparationChecklistsService.setAssignee(id, event.target.value || null))}><option value="">Selecione responsável</option>{references.data.users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}</Select>}</div></Card><Card><div className={styles.ownerRow}><div><h2>Prazo limite</h2><p>{checklist.data.dueAt ? `Vence em ${new Date(checklist.data.dueAt).toLocaleDateString("pt-BR")}` : "Nenhum prazo definido"} · <Badge tone={checklist.data.deadlineState === "OVERDUE" ? "danger" : checklist.data.deadlineState === "AT_RISK" ? "warning" : "success"}>{DEADLINE_STATE_LABELS[checklist.data.deadlineState]}</Badge></p></div>{checklist.data.status !== "APPROVED" && <form className={styles.deadlineForm} key={checklist.data.dueAt ?? "none"} onSubmit={(event) => { event.preventDefault(); const value = String(new FormData(event.currentTarget).get("dueAt") ?? ""); void runAction(() => preparationChecklistsService.setDueDate(id, value || null)); }}><Input type="date" name="dueAt" aria-label="Prazo limite" defaultValue={checklist.data.dueAt ? checklist.data.dueAt.slice(0, 10) : ""} /><Button type="submit">Salvar prazo</Button></form>}</div></Card><div className={styles.detailGrid}><div className={styles.itemList}><h2>Itens do checklist</h2>{checklist.data.items.map((item) => <ChecklistItemRow key={item.id} item={item} users={references.data?.users ?? []} locked={checklist.data?.status === "APPROVED"} onSave={(input) => saveItemOffline(item, input)} onEvidence={(input) => runAction(() => preparationChecklistsService.addEvidence(item.id, input))} />)}</div><aside className={styles.sideColumn}><Card><h2>Aprovação</h2>{checklist.data.status === "APPROVED" ? <><p>Aprovado por {checklist.data.approvedBy?.name ?? "usuário removido"} em {checklist.data.approvedAt ? new Date(checklist.data.approvedAt).toLocaleString("pt-BR") : ""}.</p><Button onClick={() => void runAction(() => preparationChecklistsService.revokeApproval(id))}>Revogar aprovação</Button></> : <><p>Todos os itens obrigatórios, evidências exigidas e o responsável precisam estar definidos.</p><Button disabled={checklist.data.status !== "READY_FOR_APPROVAL"} onClick={() => void runAction(() => preparationChecklistsService.approve(id))}>Aprovar local</Button></>}</Card><Card><h2>Histórico</h2><ol className={styles.history}>{checklist.data.history.map((entry) => <li key={entry.id}><strong>{CHECKLIST_HISTORY_LABELS[entry.action] ?? entry.action}</strong><p>{entry.message}</p><small>{entry.actor?.name ?? "Sistema"} · {new Date(entry.createdAt).toLocaleString("pt-BR")}</small></li>)}</ol></Card></aside></div></>}</section>;

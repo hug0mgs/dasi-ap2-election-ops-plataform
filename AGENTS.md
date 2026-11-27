@@ -131,11 +131,13 @@ Não crie árvores duplicadas de teste para o mesmo módulo. Se um domínio novo
 
 ## Contagem de linhas de código (cloc)
 
-O projeto acompanha o **total** de linhas de código com o comando oficial de `cloc` do `README.md`. Existe um checkpoint histórico do repositório antes da contagem contínua.
+Por decisão explícita do usuário em 2026-11-25, a métrica principal passa a medir **somente as mudanças desde o primeiro commit de ThiagoRM**, inclusive. Esse ajuste é manutenção, sem nova SPEC nem commit isolado, conforme correção registrada em `prompts/sessoes/2026-11-25-codex-ambiente-specs-loc.md`. O comando oficial está no `README.md`.
 
 - **Checkpoint inicial:** `docs/metrics/loc-checkpoints.json`, commit `5aa147c` (2026-11-17): **83.517 linhas de código em 751 arquivos**. Ele é referência histórica e não é reescrito.
-- **Métrica principal:** total atual de linhas de código. A variação desde o checkpoint é informativa, não é a métrica.
-- **Obrigação ao fim de cada tarefa:** o papel Especificador/commitador (`opencode/deepseek-v4.1-flash-free`) executa `npm run loc:total` e garante que `docs/metrics/LOC.md` reflita o último total antes do handoff.
+- **Recorte:** primeiro commit `5bed0ad7aebf96538457a5f4e68833085a6976e5`; comparar seu pai `5aa147c297a0e68a8201b6fe2408175b2c78aa3c` com `HEAD` usando `cloc --git --git-diff-all --diff`. Incluir todos os autores e arquivos novos no período; não incluir a árvore de trabalho nem linhas anteriores inalteradas na produção do período.
+- **Métrica principal:** linhas de código adicionadas, modificadas e removidas no recorte, discriminadas. Acréscimo líquido = adicionadas − removidas. Não somar modificações como linhas novas nem apresentar o total do repositório como produção do período.
+- **Obrigação ao fim de cada tarefa:** o papel Especificador/commitador executa o comando oficial do README e registra saída real, versão do cloc e hash de destino em `docs/metrics/LOC-ap2.md`. Se indisponível, registrar pendência sem estimar.
+- **Métrica auxiliar:** `npm run loc:total` e `docs/metrics/LOC.md` preservam o total e seus checkpoints históricos; não substituem a medição do recorte.
 - `LOC_NO_RECORD=1 npm run loc:total` (PowerShell: `$env:LOC_NO_RECORD=1; npm run loc:total`) mede sem gravar; use apenas em inspeção. `--no-record` só funciona chamando `node scripts/count-loc-total.mjs --no-record` direto, porque o npm intercepta flags `--no-*`.
 - Nunca editar `loc-checkpoints.json` à mão, e nunca inflar a contagem com código artificial, duplicado ou copiado.
 - Se `cloc` não estiver disponível (ou `CLOC_BIN` não apontar para ele), registre a pendência no handoff sem estimar números.

@@ -16,6 +16,10 @@ export function OfflineQueue({ userId }: { userId: string }) {
     return observeOffline(refresh);
   }, [userId]);
   const pending = items.filter((item) => item.state === "pending" || item.state === "syncing").length;
+  function change(action: () => void) {
+    try { action(); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : "Não foi possível atualizar a fila local."); }
+  }
   async function sync() {
     setBusy(true);
     try { await synchronizeOffline(userId, currentOfflineOwner); }
@@ -29,7 +33,7 @@ export function OfflineQueue({ userId }: { userId: string }) {
     return () => window.removeEventListener("online", online);
   }, [userId, pending]);
   return <section className={styles.panel} aria-label="Fila de campo sem conexão">
-    <header><div><h2>Fila de campo <span>{pending}</span></h2><p>Dados pendentes ficam neste dispositivo. A confirmação ocorre somente após resposta da API.</p></div>
+    <header><div><h2>Fila de campo <span>{pending}</span></h2><p>Dados pendentes ficam neste dispositivo, isolados por usuário mesmo após sair. Use descartar para removê-los. A confirmação ocorre somente após resposta da API.</p></div>
       <button type="button" disabled={busy || !navigator.onLine || !pending} onClick={() => void sync()}>Sincronizar agora</button></header>
     {error && <p role="alert" className={styles.error}>{error}</p>}
     {!navigator.onLine && <p role="status">Sem conexão. As operações permanecerão pendentes neste navegador.</p>}
@@ -38,8 +42,8 @@ export function OfflineQueue({ userId }: { userId: string }) {
       <small>{new Date(item.createdAt).toLocaleString("pt-BR")} · {item.attempts} tentativa(s)</small>
       {item.error && <p role="alert">{item.error}</p>}
       {item.kind !== "incident" && <Link to={item.kind === "dispatch" ? `/field-teams/dispatch/${item.resourceId}` : "/preparation-checklists/list"}>Ver registro</Link>}
-      {item.state === "failed" && <button type="button" onClick={() => retryOffline(userId, item.id)}>Revisar e tentar novamente</button>}
-      <button type="button" disabled={item.state === "syncing"} onClick={() => removeOffline(userId, item.id)}>Descartar deste dispositivo</button>
+      {item.state === "failed" && <button type="button" onClick={() => change(() => retryOffline(userId, item.id))}>Revisar e tentar novamente</button>}
+      <button type="button" disabled={item.state === "syncing"} onClick={() => change(() => removeOffline(userId, item.id))}>Descartar deste dispositivo</button>
     </li>)}</ol>}
   </section>;
 }

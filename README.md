@@ -11,35 +11,76 @@ Plataforma acadêmica modular para gestão, acompanhamento e simulação de oper
 - **Commits:** siga [`docs/COMMIT-GUIDE.md`](docs/COMMIT-GUIDE.md) para formato, escopo e trailers de rastreabilidade.
 - **Prompts/sessões:** consulte [`prompts/sessoes/`](prompts/sessoes/README.md).
 - **Ferramentas de IA registradas:** ChatGPT (GPT-5.6 Sol, quando explicitamente identificado) e Codex (modelo registrado somente quando a ferramenta/registro o expôs). Não inferimos modelos/tokens ausentes.
+- **Sessão de 2026-11-25:** Codex com `openai/gpt-6.1-sol` (orquestração, testes e documentação) e `openai/gpt-6-astra`, esforço `low` (implementação), confirmados nos metadados locais da execução.
 - **Histórico:** execute `powershell -ExecutionPolicy Bypass -File scripts/exportar-historico-git.ps1` para gerar um snapshot literal do Git.
 
 ### Comando oficial de LOC da atividade
 
-Execute em ambiente com `cloc` instalado:
+Por decisão do usuário em 2026-11-25, medir somente as mudanças desde o primeiro commit de `ThiagoRM`, inclusive. O commit inicial é `5bed0ad`; a base é seu pai `5aa147c297a0e68a8201b6fe2408175b2c78aa3c`. O recorte inclui todos os autores desde esse marco até `HEAD`, sem alterações locais não commitadas.
 
-```bash
-cloc . --vcs=git \
-  --exclude-dir=node_modules,vendor,dist,build,prompts \
-  --exclude-lang=Markdown,JSON,YAML,CSV,Text,SVG \
+Execute em ambiente com `cloc` instalado (PowerShell):
+
+```powershell
+cloc --git --git-diff-all --diff 5aa147c297a0e68a8201b6fe2408175b2c78aa3c HEAD `
+  --exclude-dir=node_modules,vendor,dist,build,prompts `
+  --exclude-lang=Markdown,JSON,YAML,CSV,Text,SVG `
   --not-match-f='(lock|\.min\.)'
 ```
 
-Em 2026-11-27, o comando contabilizou **94.290 linhas de código em 808 arquivos**. A meta de 100.000 linhas permanece pendente.
+Registrar saída real, versão e hash de destino em [docs/metrics/LOC-ap2.md](docs/metrics/LOC-ap2.md). Usar `--git-diff-all` para incluir arquivos novos na comparação completa das árvores. Separar código adicionado, modificado e removido; acréscimo líquido = adicionado − removido. O total histórico de 94.061 linhas não mede a produção do período. `loc:total` e `count:loc` continuam auxiliares e não substituem este recorte.
+
+O [relatório auxiliar de LOC](docs/metrics/LOC.md) registra o total de 94.290 linhas em 808 arquivos medido no checkout da entrega de vistoria em 2026-11-27.
+
+Preparação do ambiente e pendências verificadas: [docs/AMBIENTE-E-PENDENCIAS.md](docs/AMBIENTE-E-PENDENCIAS.md).
+
+Saída real em 2026-11-25, cloc 2.12, base `5aa147c297a0e68a8201b6fe2408175b2c78aa3c` → produto `50fe51972335babb5085e1f1a9530e670028165a`: **11.315 linhas adicionadas, 131 modificadas e 0 removidas**. A meta de 100.000 linhas no recorte permanece pendente. O handoff documental posterior só altera Markdown, excluído da medição.
 
 ```text
-github.com/AlDanial/cloc v 2.12  T=35.43 s (22.8 files/s, 2948.5 lines/s)
+github.com/AlDanial/cloc v 2.12  T=33.07 s (24.4 files/s, 3152.3 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-TypeScript                     736           5821           2072          82938
-CSS                             31            418             48           4213
-Prisma Schema                    1            381             14           3458
-SQL                             27            663            529           2515
-JavaScript                       9            192             26           1101
-PowerShell                       3              3              0             53
-HTML                             1              0              0             12
+TypeScript
+ same                          652           4911           2030          73531
+ modified                       33              0              0             43
+ added                          51            482             48           9906
+ removed                         0              0              0              0
+CSS
+ same                           27            366             48           3680
+ modified                        1              0              0              0
+ added                           3             52              0            533
+ removed                         0              0              0              0
+Prisma Schema
+ same                            0              0             10           2966
+ modified                        1              0              0             88
+ added                           0             45              4            404
+ removed                         0              0              0              0
+SQL
+ same                           25            568            446           2218
+ modified                        0              0              0              0
+ added                           2             95             83            297
+ removed                         0              0              0              0
+JavaScript
+ same                            8            172             10            926
+ modified                        0              0              0              0
+ added                           1             20             16            175
+ removed                         0              0              0              0
+PowerShell
+ same                            3              3              0             53
+ modified                        0              0              0              0
+ added                           0              0              0              0
+ removed                         0              0              0              0
+HTML
+ same                            1              0              0             12
+ modified                        0              0              0              0
+ added                           0              0              0              0
+ removed                         0              0              0              0
 -------------------------------------------------------------------------------
-SUM:                           808           7478           2689          94290
+SUM:
+ same                          716           6020           2544          83386
+ modified                       35              0              0            131
+ added                          57            694            151          11315
+ removed                         0              0              0              0
 -------------------------------------------------------------------------------
 ```
 
