@@ -24,7 +24,24 @@ cloc . --vcs=git \
   --not-match-f='(lock|\.min\.)'
 ```
 
-> **Saída do `cloc`: PENDENTE.** Cole aqui a saída real imediatamente antes da entrega. Não substitua por `npm run count:loc`, porque a rubrica usa o comando acima.
+Em 2026-11-27, o comando contabilizou **94.290 linhas de código em 808 arquivos**. A meta de 100.000 linhas permanece pendente.
+
+```text
+github.com/AlDanial/cloc v 2.12  T=35.43 s (22.8 files/s, 2948.5 lines/s)
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+TypeScript                     736           5821           2072          82938
+CSS                             31            418             48           4213
+Prisma Schema                    1            381             14           3458
+SQL                             27            663            529           2515
+JavaScript                       9            192             26           1101
+PowerShell                       3              3              0             53
+HTML                             1              0              0             12
+-------------------------------------------------------------------------------
+SUM:                           808           7478           2689          94290
+-------------------------------------------------------------------------------
+```
 
 ### Fluxo SDD obrigatório a partir de agora
 

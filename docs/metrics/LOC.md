@@ -11,15 +11,15 @@ Relatório gerado por `npm run loc:total` (`scripts/count-loc-total.mjs`). Não 
 
 ## Total atual
 
-- Data: 2026-11-25T00:50:59.701Z
-- Commit: `dfd532f` (working tree com alterações)
-- Total: **94061 linhas de código em 807 arquivos**
-- Variação desde o checkpoint inicial: +10544
-- Variação desde o checkpoint anterior: +0
+- Data: 2026-11-27T04:47:44.908Z
+- Commit: `bd29ba0` (working tree com alterações)
+- Total: **94290 linhas de código em 808 arquivos**
+- Variação desde o checkpoint inicial: +10773
+- Variação desde o checkpoint anterior: +229
 
 | Linguagem | Arquivos | Linhas de código |
 | --- | --- | --- |
-| TypeScript | 735 | 82709 |
+| TypeScript | 736 | 82938 |
 | CSS | 31 | 4213 |
 | Prisma Schema | 1 | 3458 |
 | SQL | 27 | 2515 |
@@ -39,6 +39,7 @@ Relatório gerado por `npm run loc:total` (`scripts/count-loc-total.mjs`). Não 
 | 2026-11-18T22:48:10.119Z | `64cbd7c` | 94061 | 807 | +561 |
 | 2026-11-25T00:42:13.185Z | `324a66c` | 94061 | 807 | +0 |
 | 2026-11-25T00:50:59.701Z | `dfd532f` | 94061 | 807 | +0 |
+| 2026-11-27T04:47:44.908Z | `bd29ba0` | 94290 | 808 | +229 |
 
 ## Como medir
 
