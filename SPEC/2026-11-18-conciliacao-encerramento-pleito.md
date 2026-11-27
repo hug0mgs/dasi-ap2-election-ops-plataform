@@ -1,7 +1,7 @@
 # SPEC — Conciliação de encerramento do pleito
 
 **Data:** 2026-11-18
-**Status:** `approved`
+**Status:** `implemented`
 **SPEC Gate:** `NEW_SPEC`
 
 **Revisão de retomada (2026-11-18):** `UPDATE_SPEC`. A autorização do usuário permitiu registrar a SPEC em `71ca0f2`; o código parcial já existia antes desse commit. Esta revisão esclarece ambiguidades funcionais antes das correções restantes, sem alegar anterioridade à escrita original.
