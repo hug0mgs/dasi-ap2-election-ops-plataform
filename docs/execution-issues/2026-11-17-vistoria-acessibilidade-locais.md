@@ -98,11 +98,13 @@ Disponibilizar banco PostgreSQL efêmero para CI e execução local de integraç
 
 ### Estado
 
-open
+resolved
 
 ### Decisão e evidência de encerramento
 
-Pendente de infraestrutura. Não bloqueia revisão do código, mas bloqueia declarar conformidade integral da entrega.
+Validação concluída em 2026-11-27 com PostgreSQL 17 descartável. O Prisma aplicou as 27 migrations, incluindo `202611170001_polling_place_inspections`, e o seed concluiu. Em um segundo banco com as migrations anteriores, o SQL da vistoria foi aplicado em transação e revertido com `ROLLBACK`. Essa verificação cobre a transação antes do commit.
+
+O teste `tests/e2e/flows/polling-place-inspections.spec.ts` passou via Playwright contra a API real. A cobertura inclui criação, agendamento, execução, vínculo de evidência, impeditivo, bloqueio de aprovação, pedido de ajustes, resolução, nova submissão e aprovação por outro usuário. A execução conferiu HTTP 401 sem sessão, HTTP 403 para consulta nas ações protegidas e a rejeição da autoaprovação. Uma nova leitura confirmou respostas, achado resolvido, vínculo, decisões e histórico. A consulta ao PostgreSQL também confirmou `APPROVED` e `FIT`.
 
 ## Reavaliação em 2026-11-24
 
